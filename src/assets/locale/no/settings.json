@@ -41,15 +41,30 @@
       },
       "ollamaStatus": {
         "label": "Aktiver eller deaktiver Ollama tilkoblingsstatussjekk"
+      },
+      "wideMode": {
+        "label": "Aktiver bredskjerm-modus"
+      },
+      "openReasoning": {
+        "label": "Åpne Resonnement Sammenfoldet som standard"
+      },
+      "userChatBubble": {
+        "label": "Bruk chatboble for bruker meldinger"
+      },
+      "autoCopyResponseToClipboard": {
+        "label": "Automatisk kopier svar til utklippstavle"
+      },
+      "useMarkdownForUserMessage": {
+        "label": "Aktiver Markdown-formatering for brukermeldinger"
       }
     },
-    "sidepanelRag": {
-      "heading": "Copilot Chat med Nettsted Innstillinger",
+   "sidepanelRag": {
+      "heading": "Gjenfinningsinnstillinger",
       "ragEnabled": {
-        "label": "Chat med nettstedet ved bruk av vektorinnleggelser (vector embeddings)"
+        "label": "Aktiver Innbygging og Gjenfinning"
       },
       "maxWebsiteContext": {
-        "label": "Normal nettstedinnholds størrelse",
+        "label": "Maksimal Innholdsstørrelse for Full Kontekst Modus",
         "placeholder": "Innholdsstørrelse (standard 4028)"
       }
     },
@@ -119,6 +134,16 @@
       },
       "removeReasoningTagTTS": {
         "label": "Fjern Resonneringsmerke fra TTS"
+      }
+    },
+    "stt": {
+      "heading": "Tale-til-tekst Innstillinger",
+      "autoStopTimeout": {
+        "label": "Auto-stopp Tidsavbrudd (ms)",
+        "placeholder": "Skriv inn auto-stopp tidsavbrudd i millisekunder"
+      },
+      "autoSubmitVoiceMessage": {
+        "label": "Auto-send Talemelding"
       }
     }
   },
@@ -268,6 +293,10 @@
         "label": "Ollama URL",
         "placeholder": "Skriv inn Ollama URL"
       },
+      "globalEnable": {
+        "label": "Aktiver eller Deaktiver Ollama-integrasjon Globalt",
+        "warning": "Ved å deaktivere Ollama-integrasjon globalt, vil ikke Page Assist hente modeller fra Ollama. Du kan fortsatt legge til Ollama-instans fra <anchor>OpenAI-kompatibel API</anchor>-seksjonen som vil fungere fint."
+      },
       "advanced": {
         "label": "Avansert Ollama URL-konfigurasjon",
         "urlRewriteEnabled": {
@@ -276,6 +305,9 @@
         "rewriteUrl": {
           "label": "Tilpasset opprinnelses-URL",
           "placeholder": "Skriv inn tilpasset opprinnelses-URL"
+        },
+        "autoCORSFix": {
+          "label": "Aktiver eller deaktiver automatisk Ollama CORS-fiks"
         },
         "headers": {
           "label": "Tilpass Headers",

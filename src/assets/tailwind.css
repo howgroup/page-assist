@@ -20,8 +20,6 @@
   }
 }
 
-
-
 .ant-select-selection-search-input {
   border: none !important;
   box-shadow: none !important;
@@ -71,7 +69,6 @@
   animation: gradient-border 3s infinite;
   border-radius: 10px;
 }
-
 /* Hide scrollbar by default */
 .custom-scrollbar {
   scrollbar-width: none;
@@ -90,18 +87,18 @@
 
 .custom-scrollbar:hover::-webkit-scrollbar {
   display: block;
-  width: 8px;
+  width: 10px;
 }
 
 /* Custom scrollbar styles for light theme */
 .custom-scrollbar:hover::-webkit-scrollbar-track {
   @apply bg-gray-50;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .custom-scrollbar:hover::-webkit-scrollbar-thumb {
   @apply bg-gray-300;
-  border-radius: 4px;
+  border-radius: 6px;
   transition: background 0.2s ease;
 }
 
@@ -124,10 +121,88 @@
 
 /* For Firefox */
 .custom-scrollbar {
-  scrollbar-color: theme('colors.gray.300') theme('colors.gray.50');
+  scrollbar-color: theme("colors.gray.300") theme("colors.gray.50");
   scrollbar-width: thin;
 }
 
 .dark .custom-scrollbar {
   scrollbar-color: #404040 #262626;
+}
+
+.shimmer-container {
+  position: relative;
+  overflow: hidden;
+  background-size: 200% 100%;
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer-bg 2s infinite;
+}
+
+.shimmer-text {
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent !important;
+  background-image: linear-gradient(
+    90deg,
+    #888 0%,
+    #aaa 25%,
+    #ccc 50%,
+    #aaa 75%,
+    #888 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-text 2s infinite;
+}
+
+@keyframes shimmer-bg {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+@keyframes shimmer-text {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .shimmer-container {
+    background-image: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.03) 25%,
+      rgba(255, 255, 255, 0.06) 50%,
+      rgba(255, 255, 255, 0.03) 75%,
+      rgba(255, 255, 255, 0) 100%
+    );
+  }
+  
+  .shimmer-text {
+    background-image: linear-gradient(
+      90deg,
+      #555 0%,
+      #777 25%,
+      #999 50%,
+      #777 75%,
+      #555 100%
+    );
+  }
 }

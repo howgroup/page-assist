@@ -40,6 +40,7 @@
     "copyToClipboard": "Copia negli Appunti",
     "webSearch": "Ricerca nel Web",
     "regenerate": "Rigenera",
+    "continue": "Continua Risposta",
     "edit": "Modifica",
     "delete": "Elimina",
     "saveAndSubmit": "Salva e Invia",
@@ -67,8 +68,8 @@
                 "placeholder": "Inserisci la Temperatura (e.g. 0.7, 1.0)"
             },
             "numCtx": {
-                "label": "Dimensione del Contesto",
-                "placeholder": "Inserisci la Dimensione del Contesto (default: 2048)"
+                "label": "Dimensione della Finestra di Contesto (num_ctx)",
+                "placeholder": "Inserisci il valore della Finestra di Contesto (default: 2048)"
             },
             "numPredict": {
                 "label": "Token Massimi (num_predict)",
@@ -113,6 +114,22 @@
         "yesterday": "Ieri",
         "last7Days": "Ultimi 7 Giorni",
         "older": "Più Vecchi"
+    },
+    "range": {
+        "deleteConfirm": {
+            "pinned": "Sei sicuro di voler eliminare tutti i messaggi fissati?",
+            "today": "Sei sicuro di voler eliminare tutti i messaggi di oggi?",
+            "yesterday": "Sei sicuro di voler eliminare tutti i messaggi di ieri?",
+            "last7Days": "Sei sicuro di voler eliminare tutti i messaggi degli ultimi 7 giorni?",
+            "older": "Sei sicuro di voler eliminare tutti i messaggi più vecchi?"
+        },
+        "tooltip": {
+            "pinned": "Elimina tutti i messaggi fissati",
+            "today": "Elimina tutti i messaggi di oggi",
+            "yesterday": "Elimina tutti i messaggi di ieri",
+            "last7Days": "Elimina tutti i messaggi degli ultimi 7 giorni",
+            "older": "Elimina tutti i messaggi più vecchi"
+        }
     },
     "pin": "Fissa",
     "unpin": "Rimuovi",

@@ -38,16 +38,31 @@
       },
       "ollamaStatus": {
         "label": "فعال یا غیرفعال کردن بررسی وضعیت اتصال Ollama"
+      },
+      "wideMode": {
+        "label": "فعال کردن حالت صفحه عریض"
+      },
+      "openReasoning": {
+        "label": "باز کردن استدلال به صورت پیش فرض"
+      },
+      "userChatBubble": {
+        "label": "استفاده از حباب گفتگو برای پیام‌های کاربر"
+      },
+      "autoCopyResponseToClipboard": {
+        "label": "کپی خودکار پاسخ در کلیپ بورد"
+      },
+      "useMarkdownForUserMessage": {
+        "label": "فعال کردن قالب‌بندی مارک‌داون برای پیام‌های کاربر"
       }
     },
     "sidepanelRag": {
-      "heading": "تنظیمات گپ Copilot با وب سایت",
+      "heading": "تنظیمات بازیابی",
       "ragEnabled": {
-        "label": "چت با وب سایت با استفاده از بردارهای جاسازی"
+        "label": "فعال‌سازی جاسازی و بازیابی"
       },
       "maxWebsiteContext": {
-        "label": "اندازه محتوای وب سایت حالت عادی",
-        "placeholder": "اندازه محتوا (پیش فرض 4028)"
+        "label": "حداکثر اندازه محتوا برای حالت متن کامل",
+        "placeholder": "اندازه محتوا (پیش‌فرض ۴۰۲۸)"
       }
     },
     "webSearch": {
@@ -116,6 +131,16 @@
       },
       "removeReasoningTagTTS": {
         "label": "حذف برچسب استدلال از تبدیل متن به گفتار"
+      }
+    },
+    "stt": {
+      "heading": "تنظیمات تبدیل گفتار به متن",
+      "autoStopTimeout": {
+        "label": "زمان توقف خودکار (میلی‌ثانیه)",
+        "placeholder": "زمان توقف خودکار را به میلی‌ثانیه وارد کنید"
+      },
+      "autoSubmitVoiceMessage": {
+        "label": "ارسال خودکار پیام صوتی"
       }
     }
   },
@@ -264,6 +289,10 @@
         "label": "آدرس Ollama",
         "placeholder": "URL Ollama را وارد کنید"
       },
+      "globalEnable": {
+        "label": "فعال یا غیرفعال کردن یکپارچه سازی Ollama به صورت سراسری",
+        "warning": "با غیرفعال کردن یکپارچه سازی Ollama به صورت سراسری، Page Assist مدل ها را از Ollama دریافت نخواهد کرد. شما همچنان می توانید نمونه Ollama را از بخش <anchor>API سازگار با OpenAI</anchor> اضافه کنید که به درستی کار خواهد کرد."
+      },
       "advanced": {
         "label": "پیکربندی پیشرفته URL Ollama",
         "urlRewriteEnabled": {
@@ -272,6 +301,9 @@
         "rewriteUrl": {
           "label": "URL مبدا سفارشی",
           "placeholder": "URL مبدا سفارشی را وارد کنید"
+        },
+        "autoCORSFix": {
+          "label": "فعال یا غیرفعال کردن رفع خودکار CORS در Ollama"
         },
         "headers": {
           "label": "هدرهای سفارشی",

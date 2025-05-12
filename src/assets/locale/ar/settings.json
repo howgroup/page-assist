@@ -41,15 +41,30 @@
       },
       "ollamaStatus": {
         "label": "تمكين أو تعطيل فحص حالة اتصال أولاما"
+      },
+      "wideMode": {
+        "label": "تمكين وضع الشاشة العريضة"
+      },
+      "openReasoning": {
+        "label": "فتح التفكير المنطقي بشكل افتراضي"
+      },
+      "userChatBubble": {
+        "label": "استخدام فقاعة الدردشة لرسائل المستخدم"
+      },
+      "autoCopyResponseToClipboard": {
+        "label": "نسخ الرد تلقائياً إلى الحافظة"
+      },
+      "useMarkdownForUserMessage": {
+        "label": "تمكين تنسيق ماركداون لرسائل المستخدم"
       }
     },
     "sidepanelRag": {
-      "heading": "إعدادات الدردشة مع الموقع",
+      "heading": "إعدادات الاسترجاع",
       "ragEnabled": {
-        "label": "الدردشة مع الموقع باستخدام التضمينات المتجهة"
+        "label": "تمكين التضمين والاسترجاع"
       },
       "maxWebsiteContext": {
-        "label": "حجم محتوى الموقع في الوضع العادي",
+        "label": "الحد الأقصى لحجم المحتوى لوضع السياق الكامل",
         "placeholder": "حجم المحتوى (الافتراضي 4028)"
       }
     },
@@ -122,6 +137,16 @@
       },
       "removeReasoningTagTTS": {
         "label": "إزالة علامة التفكير من تحويل النص إلى كلام"
+      }
+    },
+    "stt": {
+      "heading": "إعدادات تحويل الكلام إلى نص",
+      "autoStopTimeout": {
+        "label": "مهلة التوقف التلقائي (مللي ثانية)",
+        "placeholder": "أدخل مهلة التوقف التلقائي بالمللي ثانية"
+      },
+      "autoSubmitVoiceMessage": {
+        "label": "إرسال الرسالة الصوتية تلقائياً"
       }
     }
   },
@@ -271,6 +296,10 @@
         "label": "رابط Ollama",
         "placeholder": "أدخل رابط Ollama"
       },
+      "globalEnable": {
+        "label": "تمكين أو تعطيل تكامل Ollama عالمياً",
+        "warning": "عند تعطيل تكامل Ollama عالمياً، لن يقوم مساعد الصفحة بجلب النماذج من Ollama. لا يزال بإمكانك إضافة نسخة Ollama من قسم <anchor>واجهة برمجة التطبيقات المتوافقة مع OpenAI</anchor> والتي ستعمل بشكل جيد."
+      },
       "advanced": {
         "label": "تكوين رابط Ollama المتقدم",
         "urlRewriteEnabled": {
@@ -279,6 +308,9 @@
         "rewriteUrl": {
           "label": "رابط المصدر المخصص",
           "placeholder": "أدخل رابط المصدر المخصص"
+        },
+        "autoCORSFix": {
+          "label": "تمكين أو تعطيل إصلاح CORS التلقائي لـ Ollama"
         },
         "headers": {
           "label": "الترويسات المخصصة",

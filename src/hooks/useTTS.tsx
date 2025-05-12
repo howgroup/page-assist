@@ -13,6 +13,7 @@ import { markdownToSSML } from "@/utils/markdown-to-ssml"
 import { generateSpeech } from "@/services/elevenlabs"
 import { splitMessageContent } from "@/utils/tts"
 import { removeReasoning } from "@/libs/reasoning"
+import { markdownToText } from "@/utils/markdown-to-text"
 
 export interface VoiceOptions {
   utterance: string
@@ -33,12 +34,13 @@ export const useTTS = () => {
       if (isRemoveReasoning) {
         utterance = removeReasoning(utterance)
       }
-
+      const isSSML = await isSSMLEnabled()
+      if (isSSML) {
+        utterance = markdownToSSML(utterance)
+      } else {
+        utterance = markdownToText(utterance)
+      }
       if (provider === "browser") {
-        const isSSML = await isSSMLEnabled()
-        if (isSSML) {
-          utterance = markdownToSSML(utterance)
-        }
         if (
           import.meta.env.BROWSER === "chrome" ||
           import.meta.env.BROWSER === "edge"
@@ -54,14 +56,27 @@ export const useTTS = () => {
             }
           })
         } else {
-          window.speechSynthesis.speak(new SpeechSynthesisUtterance(utterance))
-          window.speechSynthesis.onvoiceschanged = () => {
-            const voices = window.speechSynthesis.getVoices()
-            const voice = voices.find((v) => v.name === voice)
-            const utter = new SpeechSynthesisUtterance(utterance)
-            utter.voice = voice
-            window.speechSynthesis.speak(utter)
+          const synthesisUtterance = new SpeechSynthesisUtterance(utterance)
+          synthesisUtterance.onstart = () => {
+            setIsSpeaking(true)
           }
+          synthesisUtterance.onend = () => {
+            setIsSpeaking(false)
+          }
+          const voices = window.speechSynthesis.getVoices()
+          const selectedVoice = voices.find((v) => v.name === voice)
+          if (selectedVoice) {
+            synthesisUtterance.voice = selectedVoice
+          } else {
+            window.speechSynthesis.onvoiceschanged = () => {
+              const updatedVoices = window.speechSynthesis.getVoices()
+              const newVoice = updatedVoices.find((v) => v.name === voice)
+              if (newVoice) {
+                synthesisUtterance.voice = newVoice
+              }
+            }
+          }
+          window.speechSynthesis.speak(synthesisUtterance)
         }
       } else if (provider === "elevenlabs") {
         const apiKey = await getElevenLabsApiKey()

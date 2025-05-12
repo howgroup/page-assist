@@ -41,16 +41,31 @@
       },
       "ollamaStatus": {
         "label": "Abilita o disabilita il controllo dello stato della connessione Ollama"
+      },
+      "wideMode": {
+        "label": "Abilita modalità schermo largo"
+      },
+      "openReasoning": {
+        "label": "Apri il Ragionamento Compresso per impostazione predefinita"
+      },
+      "userChatBubble": {
+        "label": "Usa fumetto chat per i messaggi utente"
+      },
+      "autoCopyResponseToClipboard": {
+        "label": "Copia automaticamente la risposta negli appunti"
+      },
+      "useMarkdownForUserMessage": {
+        "label": "Abilita la formattazione Markdown per i messaggi dell'utente"
       }
     },
     "sidepanelRag": {
-      "heading": "Impostazioni Chat Copilot con Sito Web",
+      "heading": "Impostazioni di Recupero",
       "ragEnabled": {
-        "label": "Chatta con il sito web utilizzando embedding vettoriali"
+        "label": "Abilita Embedding e Recupero"
       },
       "maxWebsiteContext": {
-        "label": "Dimensione del contenuto del sito web in modalità normale",
-        "placeholder": "Dimensione del contenuto (predefinito 4028)"
+        "label": "Dimensione Massima del Contenuto per la Modalità Contesto Completo",
+        "placeholder": "Dimensione contenuto (predefinito 4028)"
       }
     },
     "webSearch": {
@@ -119,6 +134,16 @@
       },
       "removeReasoningTagTTS": {
         "label": "Rimuovi Tag di Ragionamento dal TTS"
+      }
+    },
+    "stt": {
+      "heading": "Impostazioni Speech-to-Text",
+      "autoStopTimeout": {
+        "label": "Timeout Arresto Automatico (ms)",
+        "placeholder": "Inserisci il timeout di arresto automatico in millisecondi"
+      },
+      "autoSubmitVoiceMessage": {
+        "label": "Invio Automatico Messaggio Vocale"
       }
     }
   },
@@ -268,6 +293,10 @@
         "label": "Ollama URL",
         "placeholder": "Inserici l'URL di Ollama"
       },
+      "globalEnable": {
+        "label": "Abilita o Disabilita l'Integrazione di Ollama Globalmente",
+        "warning": "Disabilitando l'integrazione globale di Ollama, Page Assist non recupererà i modelli da Ollama. Puoi comunque aggiungere un'istanza di Ollama dalla sezione <anchor>API compatibile con OpenAI</anchor> che funzionerà correttamente."
+      },
       "advanced": {
         "label": "Configurazione Avanzata Ollama URL",
         "urlRewriteEnabled": {
@@ -276,6 +305,9 @@
         "rewriteUrl": {
           "label": "URL di Origine Personalizzato",
           "placeholder": "Inserisci URL di Origine Personalizzato"
+        },
+        "autoCORSFix": {
+          "label": "Abilita o Disabilita la Correzione Automatica CORS di Ollama"
         },
         "headers": {
           "label": "Intestazioni Personalizzate",
