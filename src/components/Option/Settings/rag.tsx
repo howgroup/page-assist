@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next"
 import { getNoOfRetrievedDocs, getTotalFilePerKB } from "@/services/app"
 import { SidepanelRag } from "./sidepanel-rag"
 import { ProviderIcons } from "@/components/Common/ProviderIcon"
+import { SettingTitle } from "./title"
 
 export const RagSettings = () => {
   const { t } = useTranslation("settings")
@@ -282,6 +283,7 @@ export const RagSettings = () => {
 
           <SidepanelRag />
 
+
           <div>
             <div>
               <h2 className="text-base font-semibold leading-7 text-gray-900 dark:text-white">
@@ -291,6 +293,8 @@ export const RagSettings = () => {
             </div>
             <SettingPrompt />
           </div>
+
+          <SettingTitle />
         </div>
       )}
     </div>

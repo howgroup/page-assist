@@ -3,20 +3,22 @@ import { Dropdown, Empty, Tooltip } from "antd"
 import { BookIcon, ComputerIcon, ZapIcon } from "lucide-react"
 import React from "react"
 import { useTranslation } from "react-i18next"
-import { getAllPrompts } from "@/db"
+import { getAllPrompts } from "@/db/dexie/helpers"
 
 type Props = {
   setSelectedSystemPrompt: (promptId: string | undefined) => void
   setSelectedQuickPrompt: (prompt: string | undefined) => void
   selectedSystemPrompt: string | undefined
   className?: string
+  iconClassName?: string
 }
 
 export const PromptSelect: React.FC<Props> = ({
   setSelectedQuickPrompt,
   setSelectedSystemPrompt,
   selectedSystemPrompt,
-  className = "dark:text-gray-300"
+  className = "dark:text-gray-300",
+  iconClassName = "size-5"
 }) => {
   const { t } = useTranslation("option")
 
@@ -87,7 +89,7 @@ export const PromptSelect: React.FC<Props> = ({
           trigger={["click"]}>
           <Tooltip title={t("selectAPrompt")}>
             <button type="button" className={className}>
-              <BookIcon className="h-5 w-5" />
+              <BookIcon className={iconClassName} />
             </button>
           </Tooltip>
         </Dropdown>

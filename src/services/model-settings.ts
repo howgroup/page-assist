@@ -3,6 +3,8 @@ const storage = new Storage({
   area: "local"
 })
 
+const storage2 = new Storage()
+
 type ModelSettings = {
   f16KV?: boolean
   frequencyPenalty?: number
@@ -35,6 +37,13 @@ type ModelSettings = {
   minP?: number
   useMlock?: boolean
   reasoningEffort?: any
+  thinking?: boolean | "low" | "medium" | "high"
+  /**
+   * Raw JSON string of extra parameters merged into the request body for
+   * OpenAI-compatible models (e.g. DeepSeek `{"thinking":{"type":"enabled"}}`).
+   * Stored per-model, not in the global default `keys` set.
+   */
+  customBody?: string
 }
 
 const keys = [
@@ -108,7 +117,7 @@ export const getAllDefaultModelSettings = async (): Promise<ModelSettings> => {
 }
 
 export const lastUsedChatModelEnabled = async (): Promise<boolean> => {
-  const isLastUsedChatModelEnabled = await storage.get<boolean | undefined>(
+  const isLastUsedChatModelEnabled = await storage2.get<boolean | undefined>(
     "restoreLastChatModel"
   )
   return isLastUsedChatModelEnabled ?? false

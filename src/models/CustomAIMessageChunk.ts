@@ -36,23 +36,35 @@ export class CustomAIMessageChunk {
         for (const [key, value] of Object.entries(right)) {
             if (merged[key] === undefined) {
                 merged[key] = value;
-            }else if (typeof merged[key] === "string") {
+            } else if (typeof merged[key] === "string" && typeof value === "string") {
                 merged[key] = (merged[key] as string) + value;
+            } else if (Array.isArray(merged[key]) && Array.isArray(value)) {
+                merged[key] = [...(merged[key] as unknown[]), ...value];
             } else if (
                 !Array.isArray(merged[key]) &&
-                typeof merged[key] === "object"
+                typeof merged[key] === "object" &&
+                !Array.isArray(value) &&
+                typeof value === "object"
             ) {
                 merged[key] = this._mergeAdditionalKwargs(
                     merged[key] as NonNullable<BaseMessageFields["additional_kwargs"]>,
                     value as NonNullable<BaseMessageFields["additional_kwargs"]>
                 );
             } else {
-                throw new Error(
-                    `additional_kwargs[${key}] already exists in this message chunk.`
+                console.warn(
+                    `additional_kwargs[${key}] already exists in this message chunk and cannot be merged.`
                 );
             }
         }
         return merged;
+    }
+
+    _getType(): string {
+        return "ai";
+    }
+
+    _updateId(value: string | undefined) {
+        // no-op: CustomAIMessageChunk does not track id
     }
 
     concat(chunk: CustomAIMessageChunk) {

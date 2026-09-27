@@ -4,24 +4,37 @@ Page Assist supports OpenAI Compatible API endpoints. You can use any OpenAI Com
 
 By default, Page Assist supports the following OpenAI Compatible API endpoints:
 
-- OpenAI
 - LLaMA.cpp
 - LM Studio
-- Ollama
 - Llamafile
+- Ollama
+- OpenAI
+- DeepSeek
 - Fireworks
+- Novita AI
+- Hugging Face
 - Groq
 - Together
 - OpenRouter
 - Google AI
+- Gemini Enterprise Agent Platform (Vertex AI)
 - Mistral
-- DeepSeek
+- Infinigence AI
 - SiliconFlow
 - VolcEngine
 - TencentCloud
 - AlibabaCloud
-- Infinigence AI
-- Novita AI
+- vLLM
+- Moonshot
+- xAI
+- Vercel AI Gateway
+- Chutes
+- Anthropic (Claude)
+- CanopyWave
+- BigModel (Zhipu)
+- MiniMax
+- XiaomiMimo
+- Evolink
 
 
 ## Adding OpenAI Compatible API

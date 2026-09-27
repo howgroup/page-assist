@@ -4,58 +4,85 @@ import { useMessage } from "~/hooks/useMessage"
 import { EmptySidePanel } from "../Chat/empty"
 import { useWebUI } from "@/store/webui"
 import { MessageSourcePopup } from "@/components/Common/Playground/MessageSourcePopup"
+import { usePlaygroundMessageGroups } from "@/components/Common/Playground/message-groups"
 
-export const SidePanelBody = () => {
+const SidePanelBodyComponent = () => {
   const {
     messages,
     streaming,
     regenerateLastMessage,
     editMessage,
-    isSearchingInternet
+    isSearchingInternet, 
+    createChatBranch,
+    temporaryChat,
+    actionInfo
   } = useMessage()
-  const divRef = React.useRef<HTMLDivElement>(null)
   const [isSourceOpen, setIsSourceOpen] = React.useState(false)
   const [source, setSource] = React.useState<any>(null)
   const { ttsEnabled } = useWebUI()
-  React.useEffect(() => {
-    if (divRef.current) {
-      divRef.current.scrollIntoView({ behavior: "smooth" })
-    }
-  })
+  const messageGroups = usePlaygroundMessageGroups(messages)
+  const lastGroupIndex = messageGroups.length - 1
+
+  const handleEditMessage = React.useCallback(
+    (
+      actionIndex: number,
+      isHuman: boolean,
+      value: string,
+      _isSend: boolean
+    ) => {
+      editMessage(actionIndex, value, isHuman)
+    },
+    [editMessage]
+  )
+
+  const handleSourceClick = React.useCallback((data: any) => {
+    setSource(data)
+    setIsSourceOpen(true)
+  }, [])
+
   return (
     <>
       <div className="relative flex w-full flex-col items-center pt-16 pb-4">
         {messages.length === 0 && <EmptySidePanel />}
-        {messages.map((message, index) => (
+        {messageGroups.map((message, index) => (
           <PlaygroundMessage
-            key={index}
+            key={message.renderKey}
             isBot={message.isBot}
             message={message.message}
             name={message.name}
             images={message.images || []}
-            currentMessageIndex={index}
-            totalMessages={messages.length}
-            onRengerate={regenerateLastMessage}
+            isLastMessage={index === lastGroupIndex}
+            actionIndex={message.actionIndex}
+            onRengerate={
+              index === lastGroupIndex ? regenerateLastMessage : undefined
+            }
             message_type={message.messageType}
-            isProcessing={streaming}
-            isSearchingInternet={isSearchingInternet}
+            isProcessing={streaming && index === lastGroupIndex}
+            isSearchingInternet={
+              index === lastGroupIndex ? isSearchingInternet : false
+            }
             sources={message.sources}
-            onEditFormSubmit={(value) => {
-              editMessage(index, value, !message.isBot)
-            }}
-            onSourceClick={(data) => {
-              setSource(data)
-              setIsSourceOpen(true)
-            }}
+            onEditFormSubmit={handleEditMessage}
+            onNewBranch={createChatBranch}
+            onSourceClick={handleSourceClick}
             isTTSEnabled={ttsEnabled}
             generationInfo={message?.generationInfo}
-            isStreaming={streaming}
+            isStreaming={streaming && index === lastGroupIndex}
             reasoningTimeTaken={message?.reasoning_time_taken}
             modelImage={message?.modelImage}
             modelName={message?.modelName}
+            createdAt={message?.createdAt}
+            temporaryChat={temporaryChat}
+            actionInfo={index === lastGroupIndex ? actionInfo : null}
+            messageKind={message?.messageKind}
+            toolCalls={message?.toolCalls}
+            toolCallId={message?.toolCallId}
+            toolName={message?.toolName}
+            toolServerName={message?.toolServerName}
+            toolError={message?.toolError}
+            segments={message.segments}
           />
         ))}
-        <div ref={divRef} />
       </div>
       <div className="w-full pb-[157px]"></div>
 
@@ -67,3 +94,5 @@ export const SidePanelBody = () => {
     </>
   )
 }
+
+export const SidePanelBody = React.memo(SidePanelBodyComponent)

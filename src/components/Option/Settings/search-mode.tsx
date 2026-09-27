@@ -1,7 +1,7 @@
 import { SaveButton } from "@/components/Common/SaveButton"
 import { getSearchSettings, setSearchSettings } from "@/services/search"
 import { ALL_GOOGLE_DOMAINS } from "@/utils/google-domains"
-import { SUPPORTED_SERACH_PROVIDERS } from "@/utils/search-provider"
+import { SUPPORTED_SEARCH_PROVIDERS } from "@/utils/search-provider"
 import { useForm } from "@mantine/form"
 import { useQuery } from "@tanstack/react-query"
 import { Select, Skeleton, Switch, InputNumber, Input } from "antd"
@@ -18,12 +18,19 @@ export const SearchModeSettings = () => {
       visitSpecificWebsite: false,
       searxngURL: "",
       searxngJSONMode: false,
+      searxngApiKey: "",
       braveApiKey: "",
       tavilyApiKey: "",
       googleDomain: "",
       defaultInternetSearchOn: false,
       exaAPIKey: "",
-      firecrawlAPIKey: ""
+      firecrawlAPIKey: "",
+      ollamaSearchApiKey: "",
+      kagiApiKey: "",
+      perplexityApiKey: "",
+      serplyApiKey: "",
+      domainFilterList: [] as string[],
+      blockedDomainList: [] as string[]
     }
   })
 
@@ -62,7 +69,7 @@ export const SearchModeSettings = () => {
               placeholder={t("generalSettings.webSearch.provider.placeholder")}
               showSearch
               className="w-full mt-4 sm:mt-0 sm:w-[200px]"
-              options={SUPPORTED_SERACH_PROVIDERS}
+              options={SUPPORTED_SEARCH_PROVIDERS}
               filterOption={(input, option) =>
                 option!.label.toLowerCase().indexOf(input.toLowerCase()) >= 0 ||
                 option!.value.toLowerCase().indexOf(input.toLowerCase()) >= 0
@@ -83,6 +90,24 @@ export const SearchModeSettings = () => {
                   className="w-full mt-4 sm:mt-0 sm:w-[200px]"
                   required
                   {...form.getInputProps("searxngURL")}
+                />
+              </div>
+            </div>
+            <div className="flex sm:flex-row flex-col space-y-4 sm:space-y-0 sm:justify-between">
+              <span className="text-gray-700 dark:text-neutral-50">
+                {t(
+                  "generalSettings.webSearch.searxng.apiKey.label",
+                  "SearXNG API Key (Optional)"
+                )}
+              </span>
+              <div>
+                <Input.Password
+                  placeholder={t(
+                    "generalSettings.webSearch.searxng.apiKey.placeholder",
+                    "Enter your SearXNG API key"
+                  )}
+                  className="w-full mt-4 sm:mt-0 sm:w-[200px]"
+                  {...form.getInputProps("searxngApiKey")}
                 />
               </div>
             </div>
@@ -191,6 +216,102 @@ export const SearchModeSettings = () => {
           </>
         )}
 
+        {form.values.searchProvider === "ollama-search" && (
+          <>
+            <div className="flex sm:flex-row flex-col space-y-4 sm:space-y-0 sm:justify-between">
+              <span className="text-gray-700 dark:text-neutral-50">
+                {t(
+                  "generalSettings.webSearch.ollamaSearchApiKey.label",
+                  "Ollama Search API Key"
+                )}
+              </span>
+              <div>
+                <Input.Password
+                  placeholder={t(
+                    "generalSettings.webSearch.ollamaSearchApiKey.placeholder",
+                    "Ollama Search API Key"
+                  )}
+                  required
+                  className="w-full mt-4 sm:mt-0 sm:w-[200px]"
+                  {...form.getInputProps("ollamaSearchApiKey")}
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {form.values.searchProvider === "kagi-api" && (
+          <>
+            <div className="flex sm:flex-row flex-col space-y-4 sm:space-y-0 sm:justify-between">
+              <span className="text-gray-700 dark:text-neutral-50">
+                {t(
+                  "generalSettings.webSearch.kagiApi.label",
+                  "Kagi API Key"
+                )}
+              </span>
+              <div>
+                <Input.Password
+                  placeholder={t(
+                    "generalSettings.webSearch.kagiApi.placeholder",
+                    "Kagi API Key"
+                  )}
+                  required
+                  className="w-full mt-4 sm:mt-0 sm:w-[200px]"
+                  {...form.getInputProps("kagiApiKey")}
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {form.values.searchProvider === "perplexity-api" && (
+          <>
+            <div className="flex sm:flex-row flex-col space-y-4 sm:space-y-0 sm:justify-between">
+              <span className="text-gray-700 dark:text-neutral-50">
+                {t(
+                  "generalSettings.webSearch.perplexityApi.label",
+                  "Perplexity API Key"
+                )}
+              </span>
+              <div>
+                <Input.Password
+                  placeholder={t(
+                    "generalSettings.webSearch.perplexityApi.placeholder",
+                    "Perplexity API Key"
+                  )}
+                  required
+                  className="w-full mt-4 sm:mt-0 sm:w-[200px]"
+                  {...form.getInputProps("perplexityApiKey")}
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {form.values.searchProvider === "serply-api" && (
+          <>
+            <div className="flex sm:flex-row flex-col space-y-4 sm:space-y-0 sm:justify-between">
+              <span className="text-gray-700 dark:text-neutral-50">
+                {t(
+                  "generalSettings.webSearch.serplyApi.label",
+                  "Serply API Key"
+                )}
+              </span>
+              <div>
+                <Input.Password
+                  placeholder={t(
+                    "generalSettings.webSearch.serplyApi.placeholder",
+                    "Serply API Key"
+                  )}
+                  required
+                  className="w-full mt-4 sm:mt-0 sm:w-[200px]"
+                  {...form.getInputProps("serplyApiKey")}
+                />
+              </div>
+            </div>
+          </>
+        )}
+
         <div className="flex sm:flex-row flex-col space-y-4 sm:space-y-0 sm:justify-between">
           <span className="text-gray-700 dark:text-neutral-50 ">
             {t("generalSettings.webSearch.searchMode.label")}
@@ -246,6 +367,47 @@ export const SearchModeSettings = () => {
             />
           </div>
         </div>
+
+        <div className="flex sm:flex-row flex-col space-y-4 sm:space-y-0 sm:justify-between">
+          <div className="flex flex-col space-y-1">
+            <span className="text-gray-700 dark:text-neutral-50">
+              {t("generalSettings.webSearch.domainFilter.label", "Domain Filter List")}
+            </span>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {t("generalSettings.webSearch.domainFilter.description", "Only show results from these domains")}
+            </p>
+          </div>
+          <div className="w-full mt-4 sm:mt-0 sm:w-[200px]">
+            <Select
+              mode="tags"
+              placeholder={t("generalSettings.webSearch.domainFilter.placeholder", "e.g., example.com")}
+              className="w-full"
+              tokenSeparators={[',', ' ']}
+              {...form.getInputProps("domainFilterList")}
+            />
+          </div>
+        </div>
+
+        <div className="flex sm:flex-row flex-col space-y-4 sm:space-y-0 sm:justify-between">
+          <div className="flex flex-col space-y-1">
+            <span className="text-gray-700 dark:text-neutral-50">
+              {t("generalSettings.webSearch.blockedDomains.label", "Blocked Domains")}
+            </span>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {t("generalSettings.webSearch.blockedDomains.description", "Exclude results from these domains")}
+            </p>
+          </div>
+          <div className="w-full mt-4 sm:mt-0 sm:w-[200px]">
+            <Select
+              mode="tags"
+              placeholder={t("generalSettings.webSearch.blockedDomains.placeholder", "e.g., spam.com")}
+              className="w-full"
+              tokenSeparators={[',', ' ']}
+              {...form.getInputProps("blockedDomainList")}
+            />
+          </div>
+        </div>
+
         <div className="flex justify-end">
           <SaveButton btnType="submit" />
         </div>

@@ -1,9 +1,12 @@
-import { createModel } from "@/db/models"
-import { getAllOpenAIConfig } from "@/db/openai"
+import { createModel } from "@/db/dexie/models"
+import { getAllOpenAIConfig, getOpenAIConfigById } from "@/db/dexie/openai"
+import { getAllOpenAIModels } from "@/libs/openai"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Input, Modal, Form, Select, Radio } from "antd"
+import { Input, Modal, Form, Select, Radio, AutoComplete, Spin } from "antd"
 import { Loader2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { useMemo } from "react"
+import { ProviderIcons } from "@/components/Common/ProviderIcon"
 
 type Props = {
   open: boolean
@@ -14,6 +17,9 @@ export const AddCustomModelModal: React.FC<Props> = ({ open, setOpen }) => {
   const { t } = useTranslation(["openai"])
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
+  const selectedProviderId = Form.useWatch("provider_id", form)
+  const searchValue = Form.useWatch("model_id", form)
+  const selectedModelType = Form.useWatch("model_type", form)
 
   const { data, isPending } = useQuery({
     queryKey: ["fetchProviders"],
@@ -22,6 +28,37 @@ export const AddCustomModelModal: React.FC<Props> = ({ open, setOpen }) => {
       return providers.filter((provider) => provider.provider !== "lmstudio")
     }
   })
+
+  const {
+    data: providerModels,
+    isFetching: isFetchingModels,
+    status: modelsStatus
+  } = useQuery({
+    queryKey: ["providerModels", selectedProviderId, selectedModelType],
+    queryFn: async () => {
+      const config = await getOpenAIConfigById(selectedProviderId as string)
+      const models = await getAllOpenAIModels({
+        baseUrl: config.baseUrl,
+        apiKey: config.apiKey,
+        customHeaders: config.headers,
+        modelType: (selectedModelType as "chat" | "embedding") ?? "chat"
+      })
+      return models
+    },
+    enabled: !!selectedProviderId
+  })
+
+  const autoCompleteOptions = useMemo(() => {
+    const list = providerModels ?? []
+    const cleaned = list.map((m) => ({
+      value: m.id,
+      label: `${m.name ?? m.id}`.replaceAll(/accounts\/[^\/]+\/models\//g, "")
+    }))
+    if (searchValue && !cleaned.some((o) => o.value === searchValue)) {
+      return [{ value: searchValue, label: searchValue }, ...cleaned]
+    }
+    return cleaned
+  }, [providerModels, searchValue])
 
   const onFinish = async (values: {
     model_id: string
@@ -47,8 +84,8 @@ export const AddCustomModelModal: React.FC<Props> = ({ open, setOpen }) => {
       queryClient.invalidateQueries({
         queryKey: ["fetchModel"]
       })
-      setOpen(false)
       form.resetFields()
+      setOpen(false)
     }
   })
 
@@ -57,7 +94,10 @@ export const AddCustomModelModal: React.FC<Props> = ({ open, setOpen }) => {
       footer={null}
       open={open}
       title={t("manageModels.modal.title")}
-      onCancel={() => setOpen(false)}>
+      onCancel={() => {
+        form.resetFields()
+        setOpen(false)
+      }}>
       <Form form={form} onFinish={createModelMutation} layout="vertical">
         <Form.Item
           name="model_id"
@@ -68,9 +108,32 @@ export const AddCustomModelModal: React.FC<Props> = ({ open, setOpen }) => {
               message: t("manageModels.modal.form.name.required")
             }
           ]}>
-          <Input
+          <AutoComplete
+            options={autoCompleteOptions}
             placeholder={t("manageModels.modal.form.name.placeholder")}
             size="large"
+            disabled={!selectedProviderId}
+            filterOption={(inputValue, option) =>
+              (option?.label as string)
+                ?.toLowerCase()
+                .includes(inputValue.toLowerCase()) ||
+              (option?.value as string)
+                ?.toLowerCase()
+                .includes(inputValue.toLowerCase())
+            }
+            notFoundContent={
+              selectedProviderId ? (
+                modelsStatus === "pending" || isFetchingModels ? (
+                  <div className="flex items-center justify-center py-2">
+                    <Spin size="small" />
+                  </div>
+                ) : (
+                  t("noModelFound")
+                )
+              ) : (
+                t("manageModels.modal.form.provider.placeholder")
+              )
+            }
           />
         </Form.Item>
 
@@ -86,13 +149,35 @@ export const AddCustomModelModal: React.FC<Props> = ({ open, setOpen }) => {
           <Select
             placeholder={t("manageModels.modal.form.provider.placeholder")}
             size="large"
-            loading={isPending}>
-            {data?.map((provider: any) => (
+            loading={isPending}
+            showSearch
+            filterOption={(input, option) => {
+              //@ts-ignore
+              return (
+                option?.label?.props["data-title"]
+                  ?.toLowerCase()
+                  ?.indexOf(input.toLowerCase()) >= 0
+              )
+            }}
+            options={data?.map((e: any) => ({
+              value: e.id,
+              label: (
+                <span
+                  key={e.id}
+                  data-title={e.name}
+                  className="flex flex-row gap-3 items-center ">
+                  <ProviderIcons provider={e?.provider} className="size-4" />
+                  <span className="line-clamp-2">{e.name}</span>
+                </span>
+              )
+            }))}
+          />
+          {/* {data?.map((provider: any) => (
               <Select.Option key={provider.id} value={provider.id}>
                 {provider.name}
               </Select.Option>
-            ))}
-          </Select>
+            ))} */}
+          {/* </Select> */}
         </Form.Item>
 
         <Form.Item

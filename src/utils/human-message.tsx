@@ -1,5 +1,7 @@
-import { isCustomModel } from "@/db/models"
+import { isCustomModel, isLMStudioModel } from "@/db/dexie/models"
 import { HumanMessage, type MessageContent } from "@langchain/core/messages"
+import { processImageForOCR } from "./ocr"
+
 
 type HumanMessageType = {
   content: MessageContent
@@ -12,69 +14,128 @@ export const humanMessageFormatter = async ({
   model,
   useOCR = false
 }: HumanMessageType) => {
-  const isCustom = isCustomModel(model)
+  try {
+    const isCustom = isCustomModel(model)
 
-  if (isCustom) {
-    if (typeof content !== "string") {
-      if (content.length > 1) {
-        if (useOCR) {
-          //@ts-ignore
-          const imageUrl = content[1].image_url
-          const ocrText = await processImageForOCR(imageUrl)
-          //@ts-ignore
-          const ocrPROMPT = `${content[0].text}
-          
+    if (isCustom) {
+      if (typeof content !== "string") {
+        if (content.length > 1) {
+          if (useOCR) {
+            // Process all images for OCR
+            const imageContents = content.filter(
+              (c: any) => c.type === "image_url"
+            )
+            const ocrTexts = await Promise.all(
+              imageContents.map((c: any) => processImageForOCR(c.image_url))
+            )
+            //@ts-ignore
+            const ocrPROMPT = `${content[0].text}
+
 [IMAGE OCR TEXT]
-${ocrText}`
+${ocrTexts.join("\n\n---\n\n")}`
+            return new HumanMessage({
+              content: ocrPROMPT
+            })
+          }
+
+          // Reformat the image_url for all images
+          const newContent: MessageContent = [
+            {
+              type: "text",
+              //@ts-ignore
+              text: content[0].text
+            }
+          ]
+
+          // Add all images
+          const imageContents = content.filter(
+            (c: any) => c.type === "image_url"
+          )
+          if (imageContents.length > 0) {
+            imageContents.forEach((c: any) => {
+              if (c.image_url.length > 0) {
+                console.log(
+                  "Adding image to custom model message:",
+                  c.image_url
+                )
+                newContent.push({
+                  type: "image_url",
+                  image_url: {
+                    url: c.image_url
+                  }
+                })
+              }
+            })
+          }
+
           return new HumanMessage({
-            content: ocrPROMPT
+            content: newContent
+          })
+        } else {
+          return new HumanMessage({
+            content: (content[0] as any).text
           })
         }
+      }
+    }
 
-        // this means that we need to reformat the image_url
-        const newContent: MessageContent = [
-          {
-            type: "text",
-            //@ts-ignore
-            text: content[0].text
-          },
-          {
-            type: "image_url",
-            image_url: {
-              //@ts-ignore
-              url: content[1].image_url
-            }
-          }
-        ]
+    if (useOCR) {
+      if (typeof content !== "string" && content.length > 1) {
+        // Process all images for OCR
+        const imageContents = content.filter((c: any) => c.type === "image_url")
+        const ocrTexts = await Promise.all(
+          imageContents.map((c: any) => processImageForOCR(c.image_url))
+        )
+        //@ts-ignore
+        const ocrPROMPT = `${content[0].text}
 
+[IMAGE OCR TEXT]
+${ocrTexts.join("\n\n---\n\n")}`
         return new HumanMessage({
-          content: newContent
-        })
-      } else {
-        return new HumanMessage({
-          //@ts-ignore
-          content: content[0].text
+          content: ocrPROMPT
         })
       }
     }
-  }
-
-  if (useOCR) {
-    if (typeof content !== "string" && content.length > 1) {
-      //@ts-ignore
-      const ocrText = await processImageForOCR(content[1].image_url)
-      //@ts-ignore
-      const ocrPROMPT = `${content[0].text}
-
-[IMAGE OCR TEXT]
-${ocrText}`
+ 
+    // Handle string content or fallback
+    if (typeof content === "string") {
       return new HumanMessage({
-        content: ocrPROMPT
+        content: content
       })
     }
-  }
 
-  return new HumanMessage({
-    content
-  })
+
+    if (Array.isArray(content)) {
+      if (isLMStudioModel(model)) {
+        return new HumanMessage({
+          content: content.map((c: any) => {
+            if (c.type === "image_url") {
+              return {
+                type: "image_url",
+                image_url: {
+                  url: c.image_url
+                }
+              }
+            }
+            return c
+          })
+        })
+      }
+
+      return new HumanMessage({
+        content: content?.map((c: any, index: number) =>
+          c.type === "text" && index === 0 ? { ...c, text: c.text } : c
+        )
+      })
+    }
+
+
+    return new HumanMessage({
+      content
+    })
+  } catch (e) {
+    return new HumanMessage({
+      content
+    })
+  }
 }

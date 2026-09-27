@@ -56,9 +56,21 @@
       },
       "useMarkdownForUserMessage": {
         "label": "Aktiver Markdown-formatering for brukermeldinger"
+      },
+      "copyAsFormattedText": {
+        "label": "Kopier som formatert tekst"
+      },
+      "tabMentionsEnabled": {
+        "label": "Aktiver Fane Henvisninger (@tab)"
+      },
+      "pasteLargeTextAsFile": {
+        "label": "Lim inn stor tekst som fil"
+      },
+      "sidepanelTemporaryChat": {
+        "label": "Aktiver midlertidig chat i sidepanelet som standard"
       }
     },
-   "sidepanelRag": {
+    "sidepanelRag": {
       "heading": "Gjenfinningsinnstillinger",
       "ragEnabled": {
         "label": "Aktiver Innbygging og Gjenfinning"
@@ -99,20 +111,23 @@
     },
     "system": {
       "heading": "Systeminnstillinger",
+      "storageSyncEnabled": {
+        "label": "Aktiver nettleser lagringssynkronisering (synkroniser innstillinger på tvers av enheter)"
+      },
       "deleteChatHistory": {
         "label": "System Tilbakestilling",
         "button": "Tilbakestill Alt",
         "confirm": "Er du sikker på at du vil utføre en system tilbakestilling? Dette vil slette alle data og kan ikke angres."
       },
       "export": {
-        "label": "Eksporter chathistorikk, kunnskapsbase og prompts",
-        "button": "Eksporter Data",
-        "success": "Eksport vellykket"
+        "label": "Eksporter all data (chathistorikk, kunnskapsbase, forespørsler og innstillinger)",
+        "button": "Eksporter data",
+        "success": "Eksport fullført"
       },
       "import": {
-        "label": "Importer chathistorikk, kunnskapsbase og prompts",
-        "button": "Importer Data",
-        "success": "Import vellykket",
+        "label": "Importer all data (chathistorikk, kunnskapsbase, forespørsler og innstillinger)",
+        "button": "Importer data",
+        "success": "Import fullført",
         "error": "Importfeil"
       }
     },
@@ -120,6 +135,9 @@
       "heading": "Tekst-til-tale Innstillinger",
       "ttsEnabled": {
         "label": "Legg til Tekst-til-Tale"
+      },
+      "ttsAutoPlay": {
+        "label": "Automatisk avspilling av stemmerespons etter fullføring"
       },
       "ttsProvider": {
         "label": "Tekst-til-Tale Tilbyder",
@@ -344,7 +362,7 @@
     "heading": "Konfigurer Kunnskapsbase"
   },
   "rag": {
-    "title": "RAG Innstillinger",
+    "title": "Pipeline Innstillinger",
     "ragSettings": {
       "label": "RAG Innstillinger",
       "model": {

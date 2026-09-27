@@ -1,13 +1,23 @@
-import { getLastChatHistory, saveHistory, saveMessage, updateHistory, updateMessage } from "@/db"
-import { setLastUsedChatModel, setLastUsedChatSystemPrompt } from "@/services/model-settings"
-import { generateTitle } from "@/services/title"
+import {
+  getLastChatHistory,
+  saveHistory,
+  saveMessage,
+  updateMessage,
+  updateLastUsedModel as setLastUsedChatModel,
+  updateLastUsedPrompt as setLastUsedChatSystemPrompt,
+  updateChatHistoryCreatedAt
+} from "@/db/dexie/helpers"
+import { ChatDocuments } from "@/models/ChatTypes"
+import { generateTitleInBackground } from "@/services/title"
 import { ChatHistory } from "@/store/option"
+import { updatePageTitle } from "@/utils/update-page-title"
 
 export const saveMessageOnError = async ({
   e,
   history,
   setHistory,
   image,
+  images,
   userMessage,
   botMessage,
   historyId,
@@ -19,12 +29,14 @@ export const saveMessageOnError = async ({
   prompt_content,
   prompt_id,
   isContinue,
+  documents = []
 }: {
   e: any
   setHistory: (history: ChatHistory) => void
   history: ChatHistory
   userMessage: string
   image: string
+  images?: string[]
   botMessage: string
   historyId: string | null
   selectedModel: string
@@ -35,7 +47,11 @@ export const saveMessageOnError = async ({
   prompt_id?: string
   prompt_content?: string
   isContinue?: boolean
+  documents?: ChatDocuments
 }) => {
+  // Use images array if available, otherwise wrap single image
+  const imagesToSave = images && images.length > 0 ? images : (image ? [image] : [])
+
   if (
     e?.name === "AbortError" ||
     e?.message === "AbortError" ||
@@ -46,101 +62,116 @@ export const saveMessageOnError = async ({
       ...history,
       {
         role: "user",
+        createdAt: Date.now(),
         content: userMessage,
-        image
+        image,
+        images
       },
       {
         role: "assistant",
+        createdAt: Date.now(),
         content: botMessage
       }
     ])
 
     if (historyId) {
       if (!isRegenerating && !isContinue) {
-        await saveMessage(
-          {
-            history_id: historyId,
-            name: selectedModel,
-            role: "user",
-            content: userMessage,
-            images: [image],
-            time: 1,
-            message_type,
-          }
-        )
+        await saveMessage({
+          history_id: historyId,
+          name: selectedModel,
+          role: "user",
+          content: userMessage,
+          images: imagesToSave,
+          time: 1,
+          message_type,
+          documents
+        })
       }
-
 
       if (isContinue) {
         console.log("Saving Last Message")
         const lastMessage = await getLastChatHistory(historyId)
-        await updateMessage(
-          historyId,
-          lastMessage.id,
-          botMessage
-        )
+        await updateMessage(historyId, lastMessage.id, botMessage)
       } else {
-
-        await saveMessage(
-          {
-            history_id: historyId,
-            name: selectedModel,
-            role: "assistant",
-            content: botMessage,
-            images: [],
-            source: [],
-            time: 2,
-            message_type,
-          }
-        )
-      }
-      await setLastUsedChatModel(historyId, selectedModel)
-      if (prompt_id || prompt_content) {
-        await setLastUsedChatSystemPrompt(historyId, { prompt_content, prompt_id })
-      }
-    } else {
-      const title = await generateTitle(selectedModel, userMessage, userMessage)
-      const newHistoryId = await saveHistory(title, false, message_source)
-      if (!isRegenerating) {
-
-        await saveMessage(
-          {
-            history_id: newHistoryId.id,
-            name: selectedModel,
-            role: "user",
-            content: userMessage,
-            images: [image],
-            time: 1,
-            message_type,
-          }
-        )
-      }
-
-
-
-      await saveMessage(
-        {
-          history_id: newHistoryId.id,
+        await saveMessage({
+          history_id: historyId,
           name: selectedModel,
           role: "assistant",
           content: botMessage,
           images: [],
           source: [],
           time: 2,
+          message_type
+        })
+      }
+      await setLastUsedChatModel(historyId, selectedModel)
+      if (prompt_id || prompt_content) {
+        await setLastUsedChatSystemPrompt(historyId, {
+          prompt_content,
+          prompt_id
+        })
+      }
+
+      return historyId
+    } else {
+      const newHistoryId = await saveHistory(userMessage, false, message_source)
+      updatePageTitle(newHistoryId.title)
+      if (!isRegenerating) {
+        await saveMessage({
+          history_id: newHistoryId.id,
+          name: selectedModel,
+          role: "user",
+          content: userMessage,
+          images: imagesToSave,
+          time: 1,
           message_type,
-        }
-      )
+          documents
+        })
+      }
+
+      await saveMessage({
+        history_id: newHistoryId.id,
+        name: selectedModel,
+        role: "assistant",
+        content: botMessage,
+        images: [],
+        source: [],
+        time: 2,
+        message_type
+      })
       setHistoryId(newHistoryId.id)
       await setLastUsedChatModel(newHistoryId.id, selectedModel)
       if (prompt_id || prompt_content) {
-        await setLastUsedChatSystemPrompt(newHistoryId.id, { prompt_content, prompt_id })
+        await setLastUsedChatSystemPrompt(newHistoryId.id, {
+          prompt_content,
+          prompt_id
+        })
       }
-    }
 
-    return true
+      generateTitleInBackground({
+        historyId: newHistoryId.id,
+        model: selectedModel,
+        history: [
+          ...history,
+          {
+            role: "user",
+            content: userMessage,
+            image,
+            images
+          },
+          {
+            role: "assistant",
+            content: botMessage
+          }
+        ],
+        provisionalTitle: newHistoryId.title
+      })
+
+      return newHistoryId.id
+    }
   }
 
-  return false
+  return historyId
 }
 
 export const saveMessageOnSuccess = async ({
@@ -150,14 +181,17 @@ export const saveMessageOnSuccess = async ({
   selectedModel,
   message,
   image,
+  images,
   fullText,
   source,
   message_source = "web-ui",
-  message_type, generationInfo,
+  message_type,
+  generationInfo,
   prompt_id,
   prompt_content,
   reasoning_time_taken = 0,
   isContinue,
+  documents = []
 }: {
   historyId: string | null
   setHistoryId: (historyId: string) => void
@@ -165,44 +199,41 @@ export const saveMessageOnSuccess = async ({
   selectedModel: string | null
   message: string
   image: string
+  images?: string[]
   fullText: string
   source: any[]
-  message_source?: "copilot" | "web-ui",
+  message_source?: "copilot" | "web-ui"
   message_type?: string
   generationInfo?: any
   prompt_id?: string
   prompt_content?: string
   reasoning_time_taken?: number
-  isContinue?: boolean,
+  isContinue?: boolean
+  documents?: ChatDocuments
 }) => {
+  // Use images array if available, otherwise wrap single image
+  const imagesToSave = images && images.length > 0 ? images : (image ? [image] : [])
   if (historyId) {
     if (!isRegenerate && !isContinue) {
-
-      await saveMessage(
-        {
-          history_id: historyId,
-          name: selectedModel,
-          role: "user",
-          content: message,
-          images: [image],
-          time: 1,
-          message_type,
-          generationInfo,
-          reasoning_time_taken
-        }
-      )
+      await saveMessage({
+        history_id: historyId,
+        name: selectedModel,
+        role: "user",
+        content: message,
+        images: imagesToSave,
+        time: 1,
+        message_type,
+        generationInfo,
+        reasoning_time_taken,
+        documents
+      })
     }
-
 
     if (isContinue) {
       console.log("Saving Last Message")
       const lastMessage = await getLastChatHistory(historyId)
       console.log("lastMessage", lastMessage)
-      await updateMessage(
-        historyId,
-        lastMessage.id,
-        fullText
-      )
+      await updateMessage(historyId, lastMessage.id, fullText)
     } else {
       await saveMessage(
         {
@@ -232,12 +263,18 @@ export const saveMessageOnSuccess = async ({
 
     await setLastUsedChatModel(historyId, selectedModel!)
     if (prompt_id || prompt_content) {
-      await setLastUsedChatSystemPrompt(historyId, { prompt_content, prompt_id })
+      await setLastUsedChatSystemPrompt(historyId, {
+        prompt_content,
+        prompt_id
+      })
     }
-  } else {
-    const title = await generateTitle(selectedModel, message, message)
-    const newHistoryId = await saveHistory(title, false, message_source)
 
+    await updateChatHistoryCreatedAt(historyId)
+
+    return historyId
+  } else {
+    const newHistoryId = await saveHistory(message, false, message_source)
+    updatePageTitle(newHistoryId.title)
 
     await saveMessage(
       {
@@ -245,11 +282,12 @@ export const saveMessageOnSuccess = async ({
         name: selectedModel,
         role: "user",
         content: message,
-        images: [image],
+        images: imagesToSave,
         time: 1,
         message_type,
         generationInfo,
-        reasoning_time_taken
+        reasoning_time_taken,
+        documents
       }
       // newHistoryId.id,
       // selectedModel,
@@ -262,7 +300,6 @@ export const saveMessageOnSuccess = async ({
       // generationInfo,
       // reasoning_time_taken
     )
-
 
     await saveMessage(
       {
@@ -291,7 +328,30 @@ export const saveMessageOnSuccess = async ({
     setHistoryId(newHistoryId.id)
     await setLastUsedChatModel(newHistoryId.id, selectedModel!)
     if (prompt_id || prompt_content) {
-      await setLastUsedChatSystemPrompt(newHistoryId.id, { prompt_content, prompt_id })
+      await setLastUsedChatSystemPrompt(newHistoryId.id, {
+        prompt_content,
+        prompt_id
+      })
     }
+
+    generateTitleInBackground({
+      historyId: newHistoryId.id,
+      model: selectedModel!,
+      history: [
+        {
+          role: "user",
+          content: message,
+          image,
+          images
+        },
+        {
+          role: "assistant",
+          content: fullText
+        }
+      ],
+      provisionalTitle: newHistoryId.title
+    })
+
+    return newHistoryId.id
   }
 }

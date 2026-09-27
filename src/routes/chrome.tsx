@@ -11,7 +11,13 @@ import SidepanelChat from "./sidepanel-chat"
 import SidepanelSettings from "./sidepanel-settings"
 import OptionRagSettings from "./option-rag"
 import OptionChrome from "./option-settings-chrome"
+import OptionPageAction from "./option-settings-page-action"
+import OptionWebMcp from "./option-settings-webmcp"
 import OptionOpenAI from "./option-settings-openai"
+import OptionMCP from "./option-settings-mcp"
+import OptionMemory from "./option-settings-memory"
+import SidepanelSettingsOpenAI from "./sidepanel-settings-openai"
+import SidepanelSettingsModel from "./sidepanel-settings-model"
 
 export const OptionRoutingChrome = () => {
   return (
@@ -22,7 +28,11 @@ export const OptionRoutingChrome = () => {
       <Route path="/settings/prompt" element={<OptionPrompt />} />
       <Route path="/settings/ollama" element={<OptionOllamaSettings />} />
       <Route path="/settings/chrome" element={<OptionChrome />} />
+      <Route path="/settings/page-action" element={<OptionPageAction />} />
+      <Route path="/settings/webmcp" element={<OptionWebMcp />} />
       <Route path="/settings/openai" element={<OptionOpenAI />} />
+      <Route path="/settings/mcp" element={<OptionMCP />} />
+      <Route path="/settings/memory" element={<OptionMemory />} />
       <Route path="/settings/share" element={<OptionShare />} />
       <Route path="/settings/knowledge" element={<OptionKnowledgeBase />} />
       <Route path="/settings/rag" element={<OptionRagSettings />} />
@@ -36,6 +46,8 @@ export const SidepanelRoutingChrome = () => {
     <Routes>
       <Route path="/" element={<SidepanelChat />} />
       <Route path="/settings" element={<SidepanelSettings />} />
+      <Route path="/settings/openai" element={<SidepanelSettingsOpenAI />} />
+      <Route path="/settings/model" element={<SidepanelSettingsModel />} />
     </Routes>
   )
 }

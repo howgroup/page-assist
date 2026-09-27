@@ -11,15 +11,15 @@ const DEFAULT_PROVIDER = "duckduckgo"
 const AVAILABLE_PROVIDERS = ["google", "duckduckgo"] as const
 
 export const getIsSimpleInternetSearch = async () => {
- try {
-  const isSimpleInternetSearch = await storage.get("isSimpleInternetSearch")
-  if (!isSimpleInternetSearch || isSimpleInternetSearch.length === 0) {
+  try {
+    const isSimpleInternetSearch = await storage.get("isSimpleInternetSearch")
+    if (!isSimpleInternetSearch || isSimpleInternetSearch.length === 0) {
+      return true
+    }
+    return isSimpleInternetSearch === "true"
+  } catch (e) {
     return true
   }
-  return isSimpleInternetSearch === "true"
- } catch(e) {
-  return true
- }
 }
 
 export const getIsVisitSpecificWebsite = async () => {
@@ -86,9 +86,38 @@ export const setSearxngURL = async (searxngURL: string) => {
   await storage.set("searxngURL", searxngURL)
 }
 
+export const getSearxngApiKey = async () => {
+  const searxngApiKey = await storage2.get("searxngApiKey")
+  return searxngApiKey || ""
+}
+
+export const setSearxngApiKey = async (searxngApiKey: string) => {
+  await storage2.set("searxngApiKey", searxngApiKey)
+}
+
 export const getBraveApiKey = async () => {
   const braveApiKey = await storage2.get("braveApiKey")
   return braveApiKey || ""
+}
+
+export const getOllamaSearchApiKey = async () => {
+  const ollamaSearchApiKey = await storage2.get("ollamaSearchApiKey")
+  return ollamaSearchApiKey || ""
+}
+
+export const getKagiApiKey = async () => {
+  const kagiApiKey = await storage2.get("kagiApiKey")
+  return kagiApiKey || ""
+}
+
+export const getPerplexityApiKey = async () => {
+  const perplexityApiKey = await storage2.get("perplexityApiKey")
+  return perplexityApiKey || ""
+}
+
+export const getSerplyApiKey = async () => {
+  const serplyApiKey = await storage2.get("serplyApiKey")
+  return serplyApiKey || ""
 }
 
 export const getTavilyApiKey = async () => {
@@ -103,6 +132,22 @@ export const getFirecrawlAPIKey = async () => {
 
 export const setBraveApiKey = async (braveApiKey: string) => {
   await storage2.set("braveApiKey", braveApiKey)
+}
+
+export const setOllamaSearchApiKey = async (ollamaSearchApiKey: string) => {
+  await storage2.set("ollamaSearchApiKey", ollamaSearchApiKey)
+}
+
+export const setKagiApiKey = async (kagiApiKey: string) => {
+  await storage2.set("kagiApiKey", kagiApiKey)
+}
+
+export const setPerplexityApiKey = async (perplexityApiKey: string) => {
+  await storage2.set("perplexityApiKey", perplexityApiKey)
+}
+
+export const setSerplyApiKey = async (serplyApiKey: string) => {
+  await storage2.set("serplyApiKey", serplyApiKey)
 }
 
 export const setFirecrawlAPIKey = async (firecrawlAPIKey: string) => {
@@ -131,6 +176,38 @@ export const setGoogleDomain = async (domain: string) => {
   await storage2.set("searchGoogleDomain", domain)
 }
 
+export const getDomainFilterList = async (): Promise<string[]> => {
+  const domainFilterList = await storage.get("domainFilterList")
+  if (!domainFilterList || domainFilterList.length === 0) {
+    return []
+  }
+  try {
+    return JSON.parse(domainFilterList)
+  } catch (e) {
+    return []
+  }
+}
+
+export const setDomainFilterList = async (domainFilterList: string[]) => {
+  await storage.set("domainFilterList", JSON.stringify(domainFilterList))
+}
+
+export const getBlockedDomainList = async (): Promise<string[]> => {
+  const blockedDomainList = await storage.get("blockedDomainList")
+  if (!blockedDomainList || blockedDomainList.length === 0) {
+    return []
+  }
+  try {
+    return JSON.parse(blockedDomainList)
+  } catch (e) {
+    return []
+  }
+}
+
+export const setBlockedDomainList = async (blockedDomainList: string[]) => {
+  await storage.set("blockedDomainList", JSON.stringify(blockedDomainList))
+}
+
 export const getInternetSearchOn = async () => {
   const defaultInternetSearchOn = await storage.get<boolean | undefined>(
     "defaultInternetSearchOn"
@@ -150,12 +227,19 @@ export const getSearchSettings = async () => {
     visitSpecificWebsite,
     searxngURL,
     searxngJSONMode,
+    searxngApiKey,
     braveApiKey,
     tavilyApiKey,
     googleDomain,
     defaultInternetSearchOn,
     exaAPIKey,
-    firecrawlAPIKey
+    firecrawlAPIKey,
+    ollamaSearchApiKey,
+    kagiApiKey,
+    perplexityApiKey,
+    serplyApiKey,
+    domainFilterList,
+    blockedDomainList
   ] = await Promise.all([
     getIsSimpleInternetSearch(),
     getSearchProvider(),
@@ -163,12 +247,19 @@ export const getSearchSettings = async () => {
     getIsVisitSpecificWebsite(),
     getSearxngURL(),
     isSearxngJSONMode(),
+    getSearxngApiKey(),
     getBraveApiKey(),
     getTavilyApiKey(),
     getGoogleDomain(),
     getInternetSearchOn(),
     getExaAPIKey(),
-    getFirecrawlAPIKey()
+    getFirecrawlAPIKey(),
+    getOllamaSearchApiKey(),
+    getKagiApiKey(),
+    getPerplexityApiKey(),
+    getSerplyApiKey(),
+    getDomainFilterList(),
+    getBlockedDomainList()
   ])
 
   return {
@@ -178,12 +269,19 @@ export const getSearchSettings = async () => {
     visitSpecificWebsite,
     searxngURL,
     searxngJSONMode,
+    searxngApiKey,
     braveApiKey,
     tavilyApiKey,
     googleDomain,
     defaultInternetSearchOn,
     exaAPIKey,
-    firecrawlAPIKey
+    firecrawlAPIKey,
+    ollamaSearchApiKey,
+    kagiApiKey,
+    perplexityApiKey,
+    serplyApiKey,
+    domainFilterList,
+    blockedDomainList
   }
 }
 
@@ -194,12 +292,19 @@ export const setSearchSettings = async ({
   visitSpecificWebsite,
   searxngJSONMode,
   searxngURL,
+  searxngApiKey,
   braveApiKey,
   tavilyApiKey,
   googleDomain,
   defaultInternetSearchOn,
   exaAPIKey,
-  firecrawlAPIKey
+  firecrawlAPIKey,
+  ollamaSearchApiKey,
+  kagiApiKey,
+  perplexityApiKey,
+  serplyApiKey,
+  domainFilterList,
+  blockedDomainList
 }: {
   isSimpleInternetSearch: boolean
   searchProvider: string
@@ -207,12 +312,19 @@ export const setSearchSettings = async ({
   visitSpecificWebsite: boolean
   searxngURL: string
   searxngJSONMode: boolean
+  searxngApiKey: string
   braveApiKey: string
   tavilyApiKey: string
-  googleDomain: string,
+  googleDomain: string
   defaultInternetSearchOn: boolean
-  exaAPIKey: string,
+  exaAPIKey: string
   firecrawlAPIKey: string
+  ollamaSearchApiKey: string
+  kagiApiKey: string
+  perplexityApiKey: string
+  serplyApiKey: string
+  domainFilterList: string[]
+  blockedDomainList: string[]
 }) => {
   await Promise.all([
     setIsSimpleInternetSearch(isSimpleInternetSearch),
@@ -221,11 +333,18 @@ export const setSearchSettings = async ({
     setIsVisitSpecificWebsite(visitSpecificWebsite),
     setSearxngJSONMode(searxngJSONMode),
     setSearxngURL(searxngURL),
+    setSearxngApiKey(searxngApiKey),
     setBraveApiKey(braveApiKey),
     setTavilyApiKey(tavilyApiKey),
     setGoogleDomain(googleDomain),
     setInternetSearchOn(defaultInternetSearchOn),
     setExaAPIKey(exaAPIKey),
-    setFirecrawlAPIKey(firecrawlAPIKey)
+    setFirecrawlAPIKey(firecrawlAPIKey),
+    setOllamaSearchApiKey(ollamaSearchApiKey),
+    setKagiApiKey(kagiApiKey),
+    setPerplexityApiKey(perplexityApiKey),
+    setSerplyApiKey(serplyApiKey),
+    setDomainFilterList(domainFilterList),
+    setBlockedDomainList(blockedDomainList)
   ])
 }

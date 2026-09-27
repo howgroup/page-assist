@@ -1,23 +1,27 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import {
-  Skeleton,
-  Table,
-  Tag,
-  Tooltip,
-  notification,
-  Avatar
-} from "antd"
+import { Skeleton, Table, Tag, Tooltip, notification, Avatar, Switch } from "antd"
 import { bytePerSecondFormatter } from "~/libs/byte-formater"
 import { deleteModel, getAllModels } from "~/services/ollama"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 import { useForm } from "@mantine/form"
-import { Pencil, RotateCcw, Settings, Trash2 } from "lucide-react"
+import {
+  ExternalLink,
+  Pencil,
+  RotateCcw,
+  Settings,
+  Trash2,
+  X
+} from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useStorage } from "@plasmohq/storage/hook"
 import { ModelNickModelNicknameModal } from "./ModelNicknameModal"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AddUpdateModelSettings } from "./AddUpdateModelSettings"
+import { getDownloadState } from "~/utils/pull-ollama"
+import { browser } from "wxt/browser"
+import { CancelPullingModel } from "./CancelPullingModel"
+import { setModelState } from "@/db/dexie/modelState"
 
 dayjs.extend(relativeTime)
 
@@ -27,6 +31,10 @@ export const OllamaModelsTable = () => {
   const [selectedModel, setSelectedModel] = useStorage("selectedModel")
   const [openNicknameModal, setOpenNicknameModal] = useState(false)
   const [openSettingsModal, setOpenSettingsModal] = useState(false)
+  const [downloadState, setDownloadState] = useState({
+    modelName: null,
+    isDownloading: false
+  })
   const [model, setModel] = useState<{
     model_id: string
     model_name?: string
@@ -43,9 +51,30 @@ export const OllamaModelsTable = () => {
     }
   })
 
+  useEffect(() => {
+    const checkDownloadState = async () => {
+      const state = await getDownloadState()
+      if (
+        state &&
+        typeof state === "object" &&
+        "modelName" in state &&
+        "isDownloading" in state
+      ) {
+        setDownloadState(state)
+      } else {
+        setDownloadState({ modelName: null, isDownloading: false })
+      }
+    }
+
+    checkDownloadState()
+    const interval = setInterval(checkDownloadState, 1000)
+
+    return () => clearInterval(interval)
+  }, [])
+
   const { data, status } = useQuery({
     queryKey: ["fetchAllModels"],
-    queryFn: async () => await getAllModels({ returnEmpty: true })
+    queryFn: async () => await getAllModels({ returnEmpty: true, includeDisabled: true })
   })
 
   const { mutate: deleteOllamaModel } = useMutation({
@@ -89,8 +118,45 @@ export const OllamaModelsTable = () => {
     mutationFn: pullModel
   })
 
+  const { mutate: toggleModelEnabled } = useMutation({
+    mutationFn: async ({ modelId, isEnabled }: { modelId: string; isEnabled: boolean }) => {
+      await setModelState(modelId, isEnabled)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["fetchAllModels"]
+      })
+      queryClient.invalidateQueries({
+        queryKey: ["fetchModel"]
+      })
+    },
+    onError: (error) => {
+      notification.error({
+        message: "Error",
+        description: error?.message || "Failed to update model state"
+      })
+    }
+  })
+
+  const cancelDownloadModel = () => {
+    browser.runtime.sendMessage({
+      type: "cancel_download"
+    })
+    notification.info({
+      message: t("manageModels.notification.cancellingDownload"),
+      description: t("manageModels.notification.cancellingDownloadDescription")
+    })
+  }
+
   return (
     <div>
+      {downloadState.isDownloading && (
+        <CancelPullingModel
+          cancelDownloadModel={cancelDownloadModel}
+          modelName={downloadState.modelName}
+        />
+      )}
+
       <div>
         {status === "pending" && <Skeleton paragraph={{ rows: 8 }} />}
 
@@ -158,8 +224,20 @@ export const OllamaModelsTable = () => {
                 {
                   title: t("manageModels.columns.actions"),
                   render: (_, record) => (
-                    <div className="flex gap-2">
-                     <Tooltip title={t("common:modelSettings.label")}>
+                    <div className="flex gap-2 items-center">
+                      <Tooltip title={record.is_enabled ? "Disable model" : "Enable model"}>
+                        <Switch
+                          checked={record.is_enabled}
+                          size="small"
+                          onChange={(checked) => {
+                            toggleModelEnabled({
+                              modelId: record.name,
+                              isEnabled: checked
+                            })
+                          }}
+                        />
+                      </Tooltip>
+                      <Tooltip title={t("common:modelSettings.label")}>
                         <button
                           onClick={() => {
                             setModel({
@@ -190,7 +268,7 @@ export const OllamaModelsTable = () => {
                           <Trash2 className="size-4" />
                         </button>
                       </Tooltip>
-                   
+
                       <Tooltip title={t("manageModels.tooltip.repull")}>
                         <button
                           onClick={() => {
@@ -252,6 +330,23 @@ export const OllamaModelsTable = () => {
               bordered
               dataSource={data}
               rowKey={(record) => `${record.model}-${record.digest}`}
+              footer={() => (
+                <div>
+                  <a
+                    href="https://ollama.com/search"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-[12px] text-neutral-50 dark:text-neutral-400 hover:text-neutral-300 dark:hover:text-neutral-200 "
+                    style={{ textDecoration: "none" }}>
+                    {t(
+                      "manageModels.getMoreModels",
+                      "Get more models from Ollama"
+                    )}
+
+                    <ExternalLink className="size-[12px] " />
+                  </a>
+                </div>
+              )}
             />
           </div>
         )}

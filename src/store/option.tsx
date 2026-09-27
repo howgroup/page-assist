@@ -1,5 +1,14 @@
 import { Knowledge } from "@/db/knowledge"
+import { ChatDocuments } from "@/models/ChatTypes"
 import { create } from "zustand"
+import { type UploadedFile } from "@/db/dexie/types"
+import { isFireFoxPrivateMode } from "@/utils/is-private-mode"
+import {
+  ChatActionInfo,
+  ChatMessageKind,
+  McpPendingApprovalRequest,
+  McpToolCall
+} from "@/libs/mcp/types"
 
 type WebSearch = {
   search_engine: string
@@ -19,17 +28,41 @@ export type Message = {
   search?: WebSearch
   reasoning_time_taken?: number
   id?: string
+  createdAt?: number
   messageType?: string
   modelName?: string
   modelImage?: string
+  documents?: ChatDocuments
+  generationInfo?: any
+  messageKind?: ChatMessageKind
+  toolCalls?: McpToolCall[]
+  toolCallId?: string
+  toolName?: string
+  toolServerName?: string
+  toolError?: boolean
 }
 
 export type ChatHistory = {
-  role: "user" | "assistant" | "system"
+  role: "user" | "assistant" | "system" | "tool"
   content: string
-  image?: string,
+  image?: string
+  images?: string[]
+  createdAt?: number
   messageType?: string
+  messageKind?: ChatMessageKind
+  toolCalls?: McpToolCall[]
+  toolCallId?: string
+  toolName?: string
+  toolServerName?: string
+  toolError?: boolean
 }[]
+
+type PendingMcpApproval = McpPendingApprovalRequest & {
+  approve: (options?: { alwaysAllow?: boolean }) => void
+  reject: (reason?: string) => void
+  /** Whether this tool's server can remember an "always allow" decision. */
+  canAlwaysAllow?: boolean
+}
 
 type State = {
   messages: Message[]
@@ -54,6 +87,10 @@ type State = {
   setIsEmbedding: (isEmbedding: boolean) => void
   webSearch: boolean
   setWebSearch: (webSearch: boolean) => void
+  pageAction: boolean
+  setPageAction: (pageAction: boolean) => void
+  webMcp: boolean
+  setWebMcp: (webMcp: boolean) => void
   isSearchingInternet: boolean
   setIsSearchingInternet: (isSearchingInternet: boolean) => void
 
@@ -74,6 +111,24 @@ type State = {
 
   useOCR: boolean
   setUseOCR: (useOCR: boolean) => void
+
+  documentContext: ChatDocuments | null
+  setDocumentContext: (documentContext: ChatDocuments) => void
+
+  uploadedFiles: UploadedFile[]
+  setUploadedFiles: (uploadedFiles: UploadedFile[]) => void
+
+  contextFiles: UploadedFile[]
+  setContextFiles: (contextFiles: UploadedFile[]) => void
+
+  actionInfo: ChatActionInfo | null
+  setActionInfo: (actionInfo: ChatActionInfo | null) => void
+
+  pendingMcpApproval: PendingMcpApproval | null
+  setPendingMcpApproval: (pendingMcpApproval: PendingMcpApproval | null) => void
+
+  fileRetrievalEnabled: boolean
+  setFileRetrievalEnabled: (fileRetrievalEnabled: boolean) => void
 }
 
 export const useStoreMessageOption = create<State>((set) => ({
@@ -102,6 +157,10 @@ export const useStoreMessageOption = create<State>((set) => ({
   setIsEmbedding: (isEmbedding) => set({ isEmbedding }),
   webSearch: false,
   setWebSearch: (webSearch) => set({ webSearch }),
+  pageAction: false,
+  setPageAction: (pageAction) => set({ pageAction }),
+  webMcp: false,
+  setWebMcp: (webMcp) => set({ webMcp }),
   isSearchingInternet: false,
   setIsSearchingInternet: (isSearchingInternet) => set({ isSearchingInternet }),
   selectedSystemPrompt: null,
@@ -113,9 +172,27 @@ export const useStoreMessageOption = create<State>((set) => ({
   selectedKnowledge: null,
   setSelectedKnowledge: (selectedKnowledge) => set({ selectedKnowledge }),
 
-  temporaryChat: false,
+  temporaryChat: isFireFoxPrivateMode,
   setTemporaryChat: (temporaryChat) => set({ temporaryChat }),
 
   useOCR: false,
   setUseOCR: (useOCR) => set({ useOCR }),
+
+  documentContext: null,
+  setDocumentContext: (documentContext) => set({ documentContext }),
+
+  uploadedFiles: [],
+  setUploadedFiles: (uploadedFiles) => set({ uploadedFiles }),
+  contextFiles: [],
+  setContextFiles: (contextFiles) => set({ contextFiles }),
+
+  actionInfo: null,
+  setActionInfo: (actionInfo) => set({ actionInfo }),
+
+  pendingMcpApproval: null,
+  setPendingMcpApproval: (pendingMcpApproval) => set({ pendingMcpApproval }),
+
+  fileRetrievalEnabled: false,
+  setFileRetrievalEnabled: (fileRetrievalEnabled) =>
+    set({ fileRetrievalEnabled })
 }))

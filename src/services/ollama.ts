@@ -8,13 +8,11 @@ import {
   setTotalFilePerKB
 } from "./app"
 import fetcher from "@/libs/fetcher"
-import { ollamaFormatAllCustomModels } from "@/db/models"
-import { getAllModelNicknames } from "@/db/nickname"
+import { ollamaFormatAllCustomModels } from "@/db/dexie/models"
+import { getAllModelNicknames } from "@/db/dexie/nickname"
+import { getAllModelStates } from "@/db/dexie/modelState"
 
 const storage = new Storage()
-const storage2 = new Storage({
-  area: "local"
-})
 
 const DEFAULT_OLLAMA_URL = "http://127.0.0.1:11434"
 const DEFAULT_ASK_FOR_MODEL_SELECTION_EVERY_TIME = true
@@ -36,38 +34,31 @@ Generate a response that is informative and relevant to the user's query based o
 </search-results>
 `
 
-const DEFAULT_WEBSEARCH_FOLLOWUP_PROMPT = `You are an expert search query optimizer. Your task is to transform follow-up questions into standalone, search-optimized queries that will yield the most relevant results when used to search the internet.
+const DEFAULT_WEBSEARCH_FOLLOWUP_PROMPT = `You will rephrase follow-up questions into concise, standalone search queries optimized for internet search engines. Transform conversational questions into keyword-focused search terms by removing unnecessary words, question formats, and context dependencies while preserving the core information need.
 
-Guidelines for creating optimal search queries:
-- Remove unnecessary words like "what is", "how to", "can you tell me about"
-- Focus on specific keywords and key concepts
-- Include important qualifiers and specifications
-- Avoid pronouns that refer to previous conversation
-- Format for direct information retrieval
-- For recent information, include relevant time indicators
+ONLY RETURN QUERY WITHOUT ANY TEXT
 
 Examples:
-
 Follow-up question: What are the symptoms of a heart attack?
-heart attack symptoms common warning signs
+heart attack symptoms
 
 Follow-up question: Where is the upcoming Olympics being held?
-next Olympic Games host city location date
+upcoming Olympics 
 
-Follow-up question: Can you tell me about Taylor Swift's latest album?
-Taylor Swift newest album release date tracks
+Follow-up question: Taylor Swift's latest album?
+Taylor Swift latest album ${new Date().getFullYear()}
 
-Follow-up question: How does it compare to her previous work?
-Taylor Swift latest album comparison previous albums critical reception
+Follow-up question: How does photosynthesis work in plants?
+photosynthesis process plants
+
+Follow-up question: What's the current stock price of Apple?
+Apple stock price today
 
 Previous Conversation:
 {chat_history}
 
 Follow-up question: {question}
-
-Optimized search query (output ONLY the query itself on one line – no explanations, no code-blocks, no extra text):
 `
-
 
 export const getOllamaURL = async () => {
   const ollamaURL = await storage.get("ollamaURL")
@@ -111,12 +102,15 @@ export const isOllamaRunning = async () => {
 }
 
 export const getAllModels = async ({
-  returnEmpty = false
+  returnEmpty = false,
+  includeDisabled = false
 }: {
   returnEmpty?: boolean
+  includeDisabled?: boolean
 }) => {
   try {
     const modelNicknames = await getAllModelNicknames()
+    const modelStates = await getAllModelStates()
     const isEnabled = await getOllamaEnabled()
 
     if (!isEnabled) {
@@ -133,11 +127,13 @@ export const getAllModels = async ({
     }
     const json = await response.json()
 
-    return json.models.map((model: any) => {
+    const allModels = json.models.map((model: any) => {
+      const isModelEnabled = modelStates[model.name] ?? true
       return {
         ...model,
         nickname: modelNicknames[model.name]?.model_name || model.name,
-        avatar: modelNicknames[model.name]?.model_avatar || undefined
+        avatar: modelNicknames[model.name]?.model_avatar || undefined,
+        is_enabled: isModelEnabled
       }
     }) as {
       name: string
@@ -147,6 +143,8 @@ export const getAllModels = async ({
       digest: string
       nickname?: string
       avatar?: string
+      is_enabled: boolean
+      provider_name?: string
       details: {
         parent_model: string
         format: string
@@ -156,6 +154,13 @@ export const getAllModels = async ({
         quantization_level: string
       }
     }[]
+
+    // Filter out disabled models unless includeDisabled is true
+    if (includeDisabled) {
+      return allModels
+    }
+
+    return allModels.filter(model => model.is_enabled)
   } catch (e) {
     console.error(e)
     return []
@@ -177,7 +182,6 @@ export const getEmbeddingModels = async ({
     const customModels = await ollamaFormatAllCustomModels("embedding")
 
     return [
-
       ...ollamaModels.map((model) => {
         return {
           ...model,
@@ -208,6 +212,40 @@ export const deleteModel = async (model: string) => {
   return "ok"
 }
 
+const truncateMiddle = (text: string, maxLength = 22): string => {
+  if (text.length <= maxLength) return text
+  const available = maxLength - 3
+  const keepEnd = Math.max(3, Math.floor(available / 3))
+  const keepStart = Math.max(4, available - keepEnd)
+  return `${text.slice(0, keepStart)}...${text.slice(-keepEnd)}`
+}
+
+const applyProviderNameToModels = async <
+  T extends { nickname?: string; name?: string; provider_name?: string }
+>(
+  models: T[]
+): Promise<T[]> => {
+  const showProviderNameInModelList = await storage.get<boolean>(
+    "showProviderNameInModelList"
+  )
+  if (!showProviderNameInModelList) {
+    return models
+  }
+  return models.map((model) => {
+    if (!model?.provider_name) {
+      return model
+    }
+    const baseLabel = model.nickname || model.name
+    const shortened = baseLabel ? truncateMiddle(baseLabel) : ""
+    return {
+      ...model,
+      nickname: shortened
+        ? `${shortened} · ${model.provider_name}`
+        : model.provider_name
+    }
+  })
+}
+
 export const fetchChatModels = async ({
   returnEmpty = false
 }: {
@@ -233,9 +271,13 @@ export const fetchChatModels = async ({
 
     const customModels = await ollamaFormatAllCustomModels("chat")
 
-    return [...chatModels, ...chromeModel, ...customModels]
+    return await applyProviderNameToModels([
+      ...chatModels,
+      ...chromeModel,
+      ...customModels
+    ])
   } catch (e) {
-    console.error(e)
+    console.error("error", e)
     const allModels = await getAllModels({ returnEmpty })
     const models = allModels.map((model) => {
       return {
@@ -245,7 +287,11 @@ export const fetchChatModels = async ({
     })
     const chromeModel = await getChromeAIModel()
     const customModels = await ollamaFormatAllCustomModels("chat")
-    return [...models, ...chromeModel, ...customModels]
+    return await applyProviderNameToModels([
+      ...models,
+      ...chromeModel,
+      ...customModels
+    ])
   }
 }
 

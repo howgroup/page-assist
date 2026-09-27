@@ -5,6 +5,7 @@
     "saved": "Saved",
     "cancel": "Cancel",
     "retry": "Retry",
+    "loadMore": "Load More...",
     "share": {
         "tooltip": {
             "share": "Share"
@@ -74,6 +75,16 @@
             "numPredict": {
                 "label": "Max Tokens (num_predict)",
                 "placeholder": "e.g. 2048, 4096"
+            },
+            "thinking": {
+                "label": "Thinking Mode (Ollama)",
+                "levels": {
+                    "off": "Off",
+                    "on": "On",
+                    "low": "Low reasoning effort",
+                    "medium": "Medium reasoning effort",
+                    "high": "High reasoning effort"
+                }
             },
             "seed": {
                 "label": "Seed",
@@ -178,8 +189,50 @@
     "sidebarChat": "Sidebar Chat",
     "reasoning": {
         "thinking": "Thinking....",
-        "thought": "Thought for {{time}}"
+        "thought": "Thought for {{time}}",
+        "title": "Reasoning Process",
+        "expand": "Show reasoning",
+        "collapse": "Hide reasoning"
     },
     "mermaid": "Mermaid",
-    "search": "Search"
+    "search": "Search",
+    "searchResults": "Search Results",
+    "embeddingGen": "Creating embeddings, this may take a while",
+    "semanticSearch": "Performing semantic search",
+    "newBranch": "New Branch",
+    "downloading": "Downloading" ,
+    "mcp": {
+        "tool": "tool",
+        "server": "server",
+        "toolRequestTitle": "Tools requested",
+        "toolResultTitle": "Tool result",
+        "arguments": "Arguments",
+        "output": "Output",
+        "approvalRequired": "Approval required",
+        "approvalPrompt": "Approve this MCP tool call before it runs.",
+        "approve": "Approve",
+        "reject": "Reject",
+        "rejectWithReason": "Reject with note",
+        "rejectionReasonPlaceholder": "Optional rejection reason",
+        "noOutput": "No output returned.",
+        "status": {
+            "success": "Success",
+            "error": "Error"
+        },
+        "action": {
+            "connecting": "Connecting to MCP servers",
+            "loading_tools": "Loading MCP tools",
+            "awaiting_approval": "Waiting for approval to run {{tool}} on {{server}}",
+            "calling_tool": "Calling {{tool}} on {{server}}",
+            "waiting_result": "Waiting for {{tool}} on {{server}}"
+        }
+    },
+    "cancelPullingModel": {
+        "confirm": "Are you sure you want to cancel the download? This will stop the download process. According to the Ollama documentation, you can restart from where you left off."
+    },
+    "saveChat": "Save Chat",
+    "quoteReply": {
+        "reply": "Reply",
+        "remove": "Remove quote"
+    }
 }

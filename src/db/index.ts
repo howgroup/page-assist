@@ -3,6 +3,7 @@ import {
   type Message as MessageType
 } from "~/store/option"
 import { getAllModelNicknames } from "./nickname"
+import { ChatDocuments } from "@/models/ChatTypes"
 type HistoryInfo = {
   id: string
   title: string
@@ -23,6 +24,24 @@ type WebSearch = {
   }[]
 }
 
+type UploadedFile = {
+  id: string
+  filename: string
+  type: string
+  content: string
+  size: number
+  uploadedAt: number
+  embedding?: number[]
+  processed: boolean
+}
+
+type SessionFiles = {
+  sessionId: string
+  files: UploadedFile[]
+  retrievalEnabled: boolean
+  createdAt: number
+}
+
 type Message = {
   id: string
   history_id: string
@@ -38,6 +57,7 @@ type Message = {
   generationInfo?: any
   modelName?: string
   modelImage?: string
+  documents?: ChatDocuments
 }
 function simpleFuzzyMatch(text: string, query: string): boolean {
   if (!text || !query) {
@@ -113,6 +133,82 @@ export class PageAssitDatabase {
 
   constructor() {
     this.db = chrome.storage.local
+  }
+
+  async getSessionFiles(sessionId: string): Promise<UploadedFile[]> {
+    return new Promise((resolve) => {
+      this.db.get(`session_files_${sessionId}`, (result) => {
+        const sessionFiles = result[
+          `session_files_${sessionId}`
+        ] as SessionFiles
+        resolve(sessionFiles?.files || [])
+      })
+    })
+  }
+
+  async getSessionFilesInfo(sessionId: string): Promise<SessionFiles | null> {
+    return new Promise((resolve) => {
+      this.db.get(`session_files_${sessionId}`, (result) => {
+        resolve(result[`session_files_${sessionId}`] || null)
+      })
+    })
+  }
+
+  async addFileToSession(sessionId: string, file: UploadedFile) {
+    const sessionFiles = await this.getSessionFilesInfo(sessionId)
+    const updatedFiles = sessionFiles ? [...sessionFiles.files, file] : [file]
+    const sessionData: SessionFiles = {
+      sessionId,
+      files: updatedFiles,
+      retrievalEnabled: sessionFiles?.retrievalEnabled || false,
+      createdAt: sessionFiles?.createdAt || Date.now()
+    }
+    this.db.set({ [`session_files_${sessionId}`]: sessionData })
+  }
+
+  async removeFileFromSession(sessionId: string, fileId: string) {
+    const sessionFiles = await this.getSessionFilesInfo(sessionId)
+    if (sessionFiles) {
+      const updatedFiles = sessionFiles.files.filter((f) => f.id !== fileId)
+      const sessionData: SessionFiles = {
+        ...sessionFiles,
+        files: updatedFiles
+      }
+      this.db.set({ [`session_files_${sessionId}`]: sessionData })
+    }
+  }
+
+  async updateFileInSession(
+    sessionId: string,
+    fileId: string,
+    updates: Partial<UploadedFile>
+  ) {
+    const sessionFiles = await this.getSessionFilesInfo(sessionId)
+    if (sessionFiles) {
+      const updatedFiles = sessionFiles.files.map((f) =>
+        f.id === fileId ? { ...f, ...updates } : f
+      )
+      const sessionData: SessionFiles = {
+        ...sessionFiles,
+        files: updatedFiles
+      }
+      this.db.set({ [`session_files_${sessionId}`]: sessionData })
+    }
+  }
+
+  async setRetrievalEnabled(sessionId: string, enabled: boolean) {
+    const sessionFiles = await this.getSessionFilesInfo(sessionId)
+    const sessionData: SessionFiles = {
+      sessionId,
+      files: sessionFiles?.files || [],
+      retrievalEnabled: enabled,
+      createdAt: sessionFiles?.createdAt || Date.now()
+    }
+    this.db.set({ [`session_files_${sessionId}`]: sessionData })
+  }
+
+  async clearSessionFiles(sessionId: string) {
+    this.db.remove(`session_files_${sessionId}`)
   }
 
   async getChatHistory(id: string): Promise<MessageHistory> {
@@ -219,6 +315,11 @@ export class PageAssitDatabase {
         resolve(result.prompts || [])
       })
     })
+  }
+
+  async bulkAddPrompts(prompts: Prompt[]) {
+    await this.db.set({ prompts: [] })
+    await this.db.set({ prompts: prompts })
   }
 
   async addPrompt(prompt: Prompt) {
@@ -383,7 +484,8 @@ export const saveMessage = async ({
   modelImage,
   modelName,
   reasoning_time_taken,
-  time
+  time,
+  documents
 }: {
   history_id: string
   name: string
@@ -397,6 +499,7 @@ export const saveMessage = async ({
   reasoning_time_taken?: number
   modelName?: string
   modelImage?: string
+  documents?: ChatDocuments
 }) => {
   const id = generateID()
   let createdAt = Date.now()
@@ -416,7 +519,8 @@ export const saveMessage = async ({
     generationInfo: generationInfo,
     reasoning_time_taken,
     modelName,
-    modelImage
+    modelImage,
+    documents
   }
   const db = new PageAssitDatabase()
   await db.addMessage(message)
@@ -449,7 +553,8 @@ export const formatToMessage = (messages: MessageHistory): MessageType[] => {
       reasoning_time_taken: message?.reasoning_time_taken,
       modelName: message?.modelName,
       modelImage: message?.modelImage,
-      id: message.id
+      id: message.id,
+      documents: message?.documents
     }
   })
 }
@@ -492,7 +597,7 @@ export const removeMessageUsingHistoryId = async (history_id: string) => {
   await db.db.set({ [history_id]: chatHistory })
 }
 
-export const getAllPrompts = async () => {
+export const getAllPromptsFB = async () => {
   const db = new PageAssitDatabase()
   return await db.getAllPrompts()
 }
@@ -519,30 +624,19 @@ export const deleteChatForEdit = async (history_id: string, index: number) => {
   await db.db.set({ [history_id]: previousHistory.reverse() })
 }
 
-export const savePrompt = async ({
-  content,
-  title,
-  is_system = false
-}: {
-  title: string
-  content: string
-  is_system: boolean
-}) => {
+export const savePromptFB = async (prompt: any) => {
   const db = new PageAssitDatabase()
-  const id = generateID()
-  const createdAt = Date.now()
-  const prompt = { id, title, content, is_system, createdAt }
   await db.addPrompt(prompt)
   return prompt
 }
 
-export const deletePromptById = async (id: string) => {
+export const deletePromptByIdFB = async (id: string) => {
   const db = new PageAssitDatabase()
   await db.deletePrompt(id)
   return id
 }
 
-export const updatePrompt = async ({
+export const updatePromptFB = async ({
   content,
   id,
   title,
@@ -563,6 +657,8 @@ export const getPromptById = async (id: string) => {
   const db = new PageAssitDatabase()
   return await db.getPromptById(id)
 }
+
+export const getPromptByIdFB = async (id: string) => getPromptById(id)
 
 export const getAllWebshares = async () => {
   const db = new PageAssitDatabase()
@@ -691,56 +787,118 @@ export const getLastChatHistory = async (history_id: string) => {
     : messages.findLast((m) => m.role === "assistant")
 }
 
-export const deleteHistoriesByDateRange = async (rangeLabel: string): Promise<string[]> => {
-  const db = new PageAssitDatabase();
-  const allHistories = await db.getChatHistories();
-  const now = new Date();
-  const today = new Date(now.setHours(0, 0, 0, 0));
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const lastWeek = new Date(today);
-  lastWeek.setDate(lastWeek.getDate() - 7);
-  let historiesToDelete: HistoryInfo[] = [];
+export const deleteHistoriesByDateRange = async (
+  rangeLabel: string
+): Promise<string[]> => {
+  const db = new PageAssitDatabase()
+  const allHistories = await db.getChatHistories()
+  const now = new Date()
+  const today = new Date(now.setHours(0, 0, 0, 0))
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const lastWeek = new Date(today)
+  lastWeek.setDate(lastWeek.getDate() - 7)
+  let historiesToDelete: HistoryInfo[] = []
   switch (rangeLabel) {
-    case 'today':
+    case "today":
       historiesToDelete = allHistories.filter(
         (item) => !item.is_pinned && new Date(item?.createdAt) >= today
-      );
-      break;
-    case 'yesterday':
+      )
+      break
+    case "yesterday":
       historiesToDelete = allHistories.filter(
         (item) =>
           !item.is_pinned &&
           new Date(item?.createdAt) >= yesterday &&
           new Date(item?.createdAt) < today
-      );
-      break;
-    case 'last7Days':
+      )
+      break
+    case "last7Days":
       historiesToDelete = allHistories.filter(
         (item) =>
           !item.is_pinned &&
           new Date(item?.createdAt) >= lastWeek &&
           new Date(item?.createdAt) < yesterday
-      );
-      break;
-    case 'older':
+      )
+      break
+    case "older":
       historiesToDelete = allHistories.filter(
         (item) => !item.is_pinned && new Date(item?.createdAt) < lastWeek
-      );
-      break;
-    case 'pinned':
-      historiesToDelete = allHistories.filter((item) => item.is_pinned);
-      break;
+      )
+      break
+    case "pinned":
+      historiesToDelete = allHistories.filter((item) => item.is_pinned)
+      break
     default:
-      return [];
+      return []
   }
 
-  const deletedIds: string[] = [];
+  const deletedIds: string[] = []
   for (const history of historiesToDelete) {
-    await db.deleteMessage(history.id);
-    await db.removeChatHistory(history.id);
-    deletedIds.push(history.id);
+    await db.deleteMessage(history.id)
+    await db.removeChatHistory(history.id)
+    deletedIds.push(history.id)
   }
 
-  return deletedIds;
+  return deletedIds
 }
+
+// Session files helper functions
+export const getSessionFiles = async (
+  sessionId: string
+): Promise<UploadedFile[]> => {
+  const db = new PageAssitDatabase()
+  return await db.getSessionFiles(sessionId)
+}
+
+export const addFileToSession = async (
+  sessionId: string,
+  file: UploadedFile
+) => {
+  const db = new PageAssitDatabase()
+  await db.addFileToSession(sessionId, file)
+}
+
+export const removeFileFromSession = async (
+  sessionId: string,
+  fileId: string
+) => {
+  const db = new PageAssitDatabase()
+  await db.removeFileFromSession(sessionId, fileId)
+}
+
+export const updateFileInSession = async (
+  sessionId: string,
+  fileId: string,
+  updates: Partial<UploadedFile>
+) => {
+  const db = new PageAssitDatabase()
+  await db.updateFileInSession(sessionId, fileId, updates)
+}
+
+export const setRetrievalEnabled = async (
+  sessionId: string,
+  enabled: boolean
+) => {
+  const db = new PageAssitDatabase()
+  await db.setRetrievalEnabled(sessionId, enabled)
+}
+
+export const getSessionFilesInfo = async (
+  sessionId: string
+): Promise<SessionFiles | null> => {
+  const db = new PageAssitDatabase()
+  return await db.getSessionFilesInfo(sessionId)
+}
+
+export const clearSessionFiles = async (sessionId: string) => {
+  const db = new PageAssitDatabase()
+  await db.clearSessionFiles(sessionId)
+}
+
+export const bulkAddPromptsFB = async (prompts: Prompt[]) => {
+  const db = new PageAssitDatabase()
+  await db.bulkAddPrompts(prompts)
+}
+
+export type { UploadedFile, SessionFiles }

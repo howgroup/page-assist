@@ -7,7 +7,8 @@ import {
   ComputerIcon,
   GithubIcon,
   PanelLeftIcon,
-  ZapIcon
+  ZapIcon,
+  SaveIcon
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useLocation, NavLink } from "react-router-dom"
@@ -18,21 +19,24 @@ import { useQuery } from "@tanstack/react-query"
 import { fetchChatModels } from "~/services/ollama"
 import { useMessageOption } from "~/hooks/useMessageOption"
 import { Avatar, Select, Tooltip } from "antd"
-import { getAllPrompts } from "@/db"
+import { getAllPrompts } from "@/db/dexie/helpers"
 import { ProviderIcons } from "../Common/ProviderIcon"
 import { NewChat } from "./NewChat"
 import { MoreOptions } from "./MoreOptions"
+import { useUiDirection } from "~/hooks/useUiDirection"
 type Props = {
   setSidebarOpen: (open: boolean) => void
   setOpenModelSettings: (open: boolean) => void
+  saveTemporaryChat?: () => Promise<string>
 }
 
 export const Header: React.FC<Props> = ({
   setOpenModelSettings,
-  setSidebarOpen
+  setSidebarOpen,
+  saveTemporaryChat
 }) => {
-  const { t, i18n } = useTranslation(["option", "common"])
-  const isRTL = i18n?.dir() === "rtl"
+  const { t } = useTranslation(["option", "common"])
+  const { isRTL } = useUiDirection()
 
   const [shareModeEnabled] = useStorage("shareMode", false)
   const [hideCurrentChatModelSettings] = useStorage(
@@ -59,6 +63,7 @@ export const Header: React.FC<Props> = ({
     queryKey: ["fetchModel"],
     queryFn: () => fetchChatModels({ returnEmpty: true }),
     refetchIntervalInBackground: false,
+    staleTime: 1000 * 60 * 1
   })
 
   const { data: prompts, isLoading: isPromptLoading } = useQuery({
@@ -89,9 +94,8 @@ export const Header: React.FC<Props> = ({
 
   return (
     <div
-      className={`absolute top-0 z-10 flex h-14 w-full flex-row items-center justify-center p-3 overflow-x-auto lg:overflow-x-visible bg-gray-50 border-b  dark:bg-[#171717] dark:border-gray-600 ${
-        temporaryChat && "!bg-gray-200 dark:!bg-black"
-      }`}>
+      data-istemporary-chat={temporaryChat}
+      className={`absolute top-0 z-10 flex h-14 w-full flex-row items-center justify-center p-3 overflow-x-auto lg:overflow-x-visible bg-gray-50/80 backdrop-blur-3xl dark:backdrop-blur-none border-b  dark:bg-[#1a1a1a] dark:border-gray-600 data-[istemporary-chat='true']:bg-violet-100/80 data-[istemporary-chat='true']:border-violet-300 data-[istemporary-chat='true']:dark:bg-black data-[istemporary-chat='true']:dark:border-gray-600`}>
       <div className="flex gap-2 items-center">
         {pathname !== "/" && (
           <div>
@@ -213,6 +217,15 @@ export const Header: React.FC<Props> = ({
       <div className="flex flex-1 justify-end px-4">
         <div className="ml-4 flex items-center md:ml-6">
           <div className="flex gap-4 items-center">
+            {temporaryChat && messages.length > 0 && !streaming && (
+              <Tooltip title={t("common:saveChat")}>
+                <button
+                  onClick={saveTemporaryChat}
+                  className="!text-gray-500 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                  <SaveIcon className="w-6 h-6" />
+                </button>
+              </Tooltip>
+            )}
             {messages.length > 0 && !streaming && (
               <MoreOptions
                 shareModeEnabled={shareModeEnabled}

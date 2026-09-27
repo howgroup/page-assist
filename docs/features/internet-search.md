@@ -8,12 +8,18 @@ Page Assist supports internet search which can be used with your LLM. It works s
 - DuckDuckGo
 - Sogou
 - Baidu
-- Searxng
 - Brave
+- Searxng
 - Brave Search API
+- Tavily Search API
 - Bing
 - Stract
-- StartPage
+- Startpage
+- Exa
+- Firecrawl
+- Ollama Web search
+- Kagi Search API (Private Beta - requires API access)
+- Perplexity Search API
 
 ## How to use Internet Search
 

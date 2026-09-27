@@ -53,6 +53,18 @@
       },
       "useMarkdownForUserMessage": {
         "label": "Aktivér Markdown formatering for brugermeddelelser"
+      },
+      "copyAsFormattedText": {
+        "label": "Kopiér som formateret tekst"
+      },
+      "tabMentionsEnabled": {
+        "label": "Aktivér Tab Omtaler (@tab)"
+      },
+      "pasteLargeTextAsFile": {
+        "label": "Indsæt stor tekst som fil"
+      },
+      "sidepanelTemporaryChat": {
+        "label": "Aktivér midlertidig chat i SidePanel som standard"
       }
     },
     "sidepanelRag": {
@@ -96,20 +108,23 @@
     },
     "system": {
       "heading": "Systemindstillinger",
+      "storageSyncEnabled": {
+        "label": "Aktivér browser lagringssynkronisering (synkroniser indstillinger på tværs af enheder)"
+      },
       "deleteChatHistory": {
         "label": "System Nulstilling",
         "button": "Nulstil Alt",
         "confirm": "Er du sikker på, at du vil udføre en systemnulstilling? Dette vil slette alle data og kan ikke fortrydes."
       },
       "export": {
-        "label": "Eksporter chathistorik, vidensbase og prompts",
-        "button": "Eksporter Data",
-        "success": "Export lykkedes"
+        "label": "Eksporter alle data (chat-historik, vidensbase, prompts og indstillinger)",
+        "button": "Eksporter data",
+        "success": "Eksport fuldført"
       },
       "import": {
-        "label": "Importer chathistorik, vidensbase og prompts",
-        "button": "Importer Data",
-        "success": "Import lykkedes",
+        "label": "Importer alle data (chat-historik, vidensbase, prompts og indstillinger)",
+        "button": "Importer data",
+        "success": "Import fuldført",
         "error": "Importfejl"
       }
     },
@@ -117,6 +132,9 @@
       "heading": "Tekst-til-tale Indstillinger",
       "ttsEnabled": {
         "label": "Tilføj Teskt-til-Tale"
+      },
+      "ttsAutoPlay": {
+        "label": "Automatisk afspilning af stemmerespons efter færdiggørelse"
       },
       "ttsProvider": {
         "label": "Tekst-til-Tale Udbyder",
@@ -341,7 +359,7 @@
     "heading": "konfigurer Videnbase"
   },
   "rag": {
-    "title": "RAG Indstillinger",
+    "title": "Pipeline Indstillinger",
     "ragSettings": {
       "label": "RAG Indstillinger",
       "model": {

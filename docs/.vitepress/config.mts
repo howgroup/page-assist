@@ -28,6 +28,10 @@ export default defineConfig({
             link: "/browser-support"
           },
           {
+            text: "Settings",
+            link: "/settings"
+          },
+          {
             text: "Keyboard Shortcuts",
             link: "/shortcuts"
           }
@@ -74,6 +78,14 @@ export default defineConfig({
             link: "/features/page-share"
           },
           {
+            text: "MCP",
+            link: "/features/mcp"
+          },
+          {
+            text: "Page Action",
+            link: "/features/page-action"
+          },
+          {
             text: "Ollama",
             link: "/features/ollama"
           },
@@ -98,6 +110,10 @@ export default defineConfig({
           {
             text: "OpenAI Compatible API",
             link: "/providers/openai"
+          },
+          {
+            text: "Gemini Enterprise Agent Platform (Vertex AI)",
+            link: "/providers/vertex"
           }
         ]
       },

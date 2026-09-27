@@ -3,9 +3,25 @@ import { useStorage } from "@plasmohq/storage/hook"
 import React from "react"
 import { useTranslation } from "react-i18next"
 import { EditMessageForm } from "./EditMessageForm"
-import { Image, Tooltip } from "antd"
+import { Image, Tag, Tooltip } from "antd"
 import { CheckIcon, CopyIcon, Pen, PlayIcon, Square } from "lucide-react"
 import { HumanMessage } from "./HumanMessge"
+import { ChatDocuments } from "@/models/ChatTypes"
+import { DocumentChip } from "./DocumentChip"
+import { DocumentFile } from "./DocumentFile"
+import { tagColors } from "@/utils/color"
+import { formatMessageTimestamp } from "@/utils/format-timestamp"
+
+// See Message.tsx: `auto` lets the browser remember the real rendered height
+// so toggling content-visibility never collapses the scroll height for a frame.
+const activeMessageRenderStyle: React.CSSProperties = {
+  containIntrinsicSize: "auto 180px"
+}
+
+const messageRenderStyle: React.CSSProperties = {
+  contentVisibility: "auto",
+  containIntrinsicSize: "auto 180px"
+}
 
 type Props = {
   message: string
@@ -16,10 +32,15 @@ type Props = {
   isBot: boolean
   name: string
   images?: string[]
-  currentMessageIndex: number
-  totalMessages: number
-  onRengerate: () => void
-  onEditFormSubmit: (value: string, isSend: boolean) => void
+  isLastMessage: boolean
+  actionIndex: number
+  onRengerate?: () => void
+  onEditFormSubmit: (
+    messageIndex: number,
+    isHuman: boolean,
+    value: string,
+    isSend: boolean
+  ) => void
   isProcessing: boolean
   webSearch?: {}
   isSearchingInternet?: boolean
@@ -33,10 +54,14 @@ type Props = {
   openReasoning?: boolean
   modelImage?: string
   modelName?: string
+  createdAt?: number
+  documents?: ChatDocuments
+  temporaryChat?: boolean
 }
 
 export const PlaygroundUserMessageBubble: React.FC<Props> = (props) => {
   const [checkWideMode] = useStorage("checkWideMode", false)
+  const [showMessageTimestamp] = useStorage("showMessageTimestamp", false)
   const [isBtnPressed, setIsBtnPressed] = React.useState(false)
   const [editMode, setEditMode] = React.useState(false)
   const { t } = useTranslation("common")
@@ -44,23 +69,99 @@ export const PlaygroundUserMessageBubble: React.FC<Props> = (props) => {
 
   return (
     <div
-      className={`group gap-2 relative flex w-full max-w-3xl flex-col items-end justify-center pb-2 md:px-4 lg:w-4/5 text-[#242424] dark:text-gray-100 ${checkWideMode ? "max-w-none" : ""}`}>
-      <div
-        dir="auto"
-        className="message-bubble bg-gray-50 dark:bg-[#242424] rounded-3xl prose dark:prose-invert break-words text-primary min-h-7 prose-p:opacity-95 prose-strong:opacity-100 bg-foreground border border-input-border max-w-[100%] sm:max-w-[90%] px-4 py-2.5 rounded-br-lg dark:border-[#2D2D2D]">
-        {!editMode ? (
+      className={`group gap-2 relative flex w-full max-w-3xl flex-col items-end justify-center pb-2 md:px-4 lg:w-4/5 text-[#242424] dark:text-gray-100 ${checkWideMode ? "max-w-none" : ""}`}
+      style={
+        props.isLastMessage || props.isStreaming || props.isProcessing
+          ? activeMessageRenderStyle
+          : messageRenderStyle
+      }>
+      {!editMode && props?.message_type && props?.message_type !== "normal" ? (
+        <Tag color={props?.message_type?.startsWith("custom_copilot_custom_") ? "orange" : tagColors[props?.message_type] || "default"}>
+          {props?.message_type?.startsWith("custom_copilot_custom_")
+            ? t("copilot.custom")
+            : t(`copilot.${props?.message_type}`)}
+        </Tag>
+      ) : null}
+
+      {props?.documents &&
+        props?.documents.length > 0 &&
+        props.documents.filter((d) => d.type === "file").length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {props.documents
+              .filter((d) => d.type === "file")
+              .map((doc, index) => (
+                <DocumentFile
+                  key={index}
+                  document={{
+                    filename: doc.filename!,
+                    fileSize: doc.fileSize!
+                  }}
+                />
+              ))}
+          </div>
+        )}
+
+      {props?.documents &&
+        props?.documents.length > 0 &&
+        props.documents.filter((d) => d.type === "tab").length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {props.documents
+              .filter((d) => d.type === "tab")
+              .map((doc, index) => (
+                <DocumentChip
+                  key={index}
+                  document={{
+                    title: doc.title,
+                    url: doc.url,
+                    favIconUrl: doc.favIconUrl
+                  }}
+                />
+              ))}
+          </div>
+        )}
+
+      {!editMode && props?.message?.length > 0 && (
+        <div
+          dir="auto"
+          data-is-not-editable={!editMode}
+          className={`message-bubble bg-gray-50 dark:bg-[#242424] rounded-3xl prose dark:prose-invert break-words text-primary min-h-7 prose-p:opacity-95 prose-strong:opacity-100 bg-foreground max-w-[100%] sm:max-w-[90%] px-4 py-2.5 rounded-br-lg ${
+            props.temporaryChat
+              ? "border-2 border-dotted border-violet-400 dark:border-gray-400"
+              : "border border-input-border dark:border-[#2a2a2a]"
+          } ${
+            props.message_type && props.message_type !== "normal" && !editMode ? "italic" : ""
+          }`}>
           <HumanMessage message={props.message} />
-        ) : (
+        </div>
+      )}
+
+      {editMode && (
+        <div
+          dir="auto"
+          className={`message-bubble bg-gray-50 dark:bg-[#2a2a2a] rounded-3xl prose dark:prose-invert break-words text-primary min-h-7 prose-p:opacity-95 prose-strong:opacity-100 bg-foreground max-w-[100%] sm:max-w-[90%] px-4 py-2.5 rounded-br-lg ${
+            props.temporaryChat
+              ? "border-2 border-dotted border-violet-400 dark:border-gray-400"
+              : "border border-input-border dark:border-[#2a2a2a]"
+          } ${
+            props.message_type && props.message_type !== "normal" && !editMode ? "italic" : ""
+          }`}>
           <div className="w-screen max-w-[100%]">
             <EditMessageForm
               value={props.message}
-              onSumbit={props.onEditFormSubmit}
+              onSumbit={(value, isSend) =>
+                props.onEditFormSubmit(
+                  props.actionIndex,
+                  true,
+                  value,
+                  isSend
+                )
+              }
               onClose={() => setEditMode(false)}
               isBot={props.isBot}
             />
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {props.images &&
         props.images.filter((img) => img.length > 0).length > 0 && (
@@ -79,10 +180,16 @@ export const PlaygroundUserMessageBubble: React.FC<Props> = (props) => {
           </div>
         )}
 
+      {showMessageTimestamp && props.createdAt && !editMode ? (
+        <span className="text-[10px] text-gray-400 dark:text-gray-500">
+          {formatMessageTimestamp(props.createdAt)}
+        </span>
+      ) : null}
+
       {!props.isProcessing && !editMode ? (
         <div
           className={`space-x-2 gap-2 flex ${
-            props.currentMessageIndex !== props.totalMessages - 1
+            !props.isLastMessage
               ? //  there is few style issue so i am commenting this out for v1.4.5 release
                 // next release we will fix this
                 "invisible group-hover:visible"

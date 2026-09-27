@@ -1,5 +1,5 @@
 import { SaveButton } from "@/components/Common/SaveButton"
-import { saveModelNickname } from "@/db/nickname"
+import { saveModelNickname } from "@/db/dexie/nickname"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Form, Input, Modal } from "antd"
 import React from "react"
@@ -43,6 +43,7 @@ export const ModelNickModelNicknameModal: React.FC<Props> = ({
       await queryClient.invalidateQueries({
         queryKey: ["fetchCustomModels"]
       })
+      form.resetFields()
 
       setOpen(false)
     }
@@ -52,7 +53,10 @@ export const ModelNickModelNicknameModal: React.FC<Props> = ({
     <Modal
       title={t("nicknameModal.title")}
       open={open}
-      onCancel={() => setOpen(false)}
+      onCancel={() => {
+        form.resetFields()
+        setOpen(false)
+      }}
       footer={null}>
       <Form
         form={form}

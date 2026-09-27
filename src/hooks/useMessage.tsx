@@ -9,8 +9,7 @@ import {
 } from "~/services/ollama"
 import { useStoreMessageOption, type Message } from "~/store/option"
 import { useStoreMessage } from "~/store"
-import { SystemMessage } from "@langchain/core/messages"
-import { getContentFromCurrentTab,  } from "~/libs/get-html"
+import { getContentFromCurrentTab } from "~/libs/get-html"
 import { memoryEmbedding } from "@/utils/memory-embeddings"
 import { ChatHistory } from "@/store/option"
 import {
@@ -19,8 +18,7 @@ import {
   getPromptById,
   removeMessageUsingHistoryId,
   updateMessageByIndex
-} from "@/db"
-import { saveMessageOnError, saveMessageOnSuccess } from "./chat-helper"
+} from "@/db/dexie/helpers"
 import { notification } from "antd"
 import { useTranslation } from "react-i18next"
 import { usePageAssist } from "@/context"
@@ -41,8 +39,23 @@ import {
   mergeReasoningContent,
   removeReasoning
 } from "@/libs/reasoning"
-import { getModelNicknameByID } from "@/db/nickname"
+import { getModelNicknameByID } from "@/db/dexie/nickname"
 import { systemPromptFormatter } from "@/utils/system-message"
+import {
+  createBranchMessage,
+  createRegenerateLastMessage
+} from "./handlers/messageHandlers"
+import {
+  createSaveMessageOnError,
+  createSaveMessageOnSuccess
+} from "./utils/messageHelpers"
+import { updatePageTitle } from "@/utils/update-page-title"
+import { getNoOfRetrievedDocs } from "@/services/app"
+import { normalChatMode as sharedNormalChatMode } from "./chat-modes/normalChatMode"
+import { pageActionChatMode } from "./chat-modes/pageActionChatMode"
+import { webMcpChatMode } from "./chat-modes/webMcpChatMode"
+import { tabChatMode } from "./chat-modes/tabChatMode"
+import { ChatDocuments } from "@/models/ChatTypes"
 
 export const useMessage = () => {
   const {
@@ -60,7 +73,16 @@ export const useMessage = () => {
     setIsSearchingInternet,
     webSearch,
     setWebSearch,
-    isSearchingInternet
+    pageAction,
+    webMcp,
+    isSearchingInternet,
+    temporaryChat,
+    setTemporaryChat,
+    actionInfo,
+    setActionInfo,
+    setPendingMcpApproval,
+    documentContext,
+    setDocumentContext
   } = useStoreMessageOption()
   const [defaultInternetSearchOn] = useStorage("defaultInternetSearchOn", false)
 
@@ -68,7 +90,7 @@ export const useMessage = () => {
 
   const [chatWithWebsiteEmbedding] = useStorage(
     "chatWithWebsiteEmbedding",
-    true
+    false
   )
   const [maxWebsiteContext] = useStorage("maxWebsiteContext", 4028)
 
@@ -97,7 +119,9 @@ export const useMessage = () => {
     useOCR,
     setUseOCR
   } = useStoreMessage()
-
+  const [sidepanelTemporaryChat] = useStorage("sidepanelTemporaryChat", false)
+  const [mcpHumanInLoop] = useStorage("mcpHumanInLoop", false)
+  const [enableAgentWebSearch] = useStorage("enableAgentWebSearch", true)
   const [speechToTextLanguage, setSpeechToTextLanguage] = useStorage(
     "speechToTextLanguage",
     "en-US"
@@ -116,6 +140,7 @@ export const useMessage = () => {
     setIsLoading(false)
     setIsProcessing(false)
     setStreaming(false)
+    updatePageTitle()
     currentChatModelSettings.reset()
     if (defaultInternetSearchOn) {
       setWebSearch(true)
@@ -123,7 +148,43 @@ export const useMessage = () => {
     if (defaultChatWithWebsite) {
       setChatMode("rag")
     }
+    if (sidepanelTemporaryChat) {
+      setTemporaryChat(true)
+    }
+    setActionInfo(null)
+    setPendingMcpApproval(null)
+    setDocumentContext(null)
   }
+
+  const saveMessageOnSuccess = createSaveMessageOnSuccess(
+    temporaryChat,
+    setHistoryId as (id: string) => void
+  )
+  const saveMessageOnError = createSaveMessageOnError(
+    temporaryChat,
+    history,
+    setHistory,
+    setHistoryId as (id: string) => void
+  )
+
+  const messagesRef = React.useRef(messages)
+  const historyRef = React.useRef(history)
+  const historyIdRef = React.useRef(historyId)
+  const onSubmitRef = React.useRef<(params: any) => Promise<void>>(
+    async () => {}
+  )
+
+  React.useEffect(() => {
+    messagesRef.current = messages
+  }, [messages])
+
+  React.useEffect(() => {
+    historyRef.current = history
+  }, [history])
+
+  React.useEffect(() => {
+    historyIdRef.current = historyId
+  }, [historyId])
 
   const chatWithWebsiteMode = async (
     message: string,
@@ -140,7 +201,7 @@ export const useMessage = () => {
 
     const ollama = await pageAssistModel({
       model: selectedModel!,
-      baseUrl: cleanUrl(url),
+      baseUrl: cleanUrl(url)
     })
 
     let newMessage: Message[] = []
@@ -152,6 +213,7 @@ export const useMessage = () => {
         ...messages,
         {
           isBot: false,
+          createdAt: Date.now(),
           name: "You",
           message,
           sources: [],
@@ -159,6 +221,7 @@ export const useMessage = () => {
         },
         {
           isBot: true,
+          createdAt: Date.now(),
           name: selectedModel,
           message: "▋",
           sources: [],
@@ -172,6 +235,7 @@ export const useMessage = () => {
         ...messages,
         {
           isBot: true,
+          createdAt: Date.now(),
           name: selectedModel,
           message: "▋",
           sources: [],
@@ -258,7 +322,7 @@ export const useMessage = () => {
           .replaceAll("{question}", message)
         const questionOllama = await pageAssistModel({
           model: selectedModel!,
-          baseUrl: cleanUrl(url),
+          baseUrl: cleanUrl(url)
         })
         const response = await questionOllama.invoke(promptForQuestion)
         query = response.content.toString()
@@ -276,7 +340,9 @@ export const useMessage = () => {
       }[] = []
 
       if (chatWithWebsiteEmbedding) {
-        const docs = await vectorstore.similaritySearch(query, 4)
+        const docSize = await getNoOfRetrievedDocs()
+
+        const docs = await vectorstore.similaritySearch(query, docSize)
         context = formatDocs(docs)
         source = docs.map((doc) => {
           return {
@@ -325,7 +391,7 @@ export const useMessage = () => {
         useOCR
       })
 
-      const applicationChatHistory = generateHistory(history, selectedModel)
+      const applicationChatHistory = await generateHistory(history, selectedModel)
 
       let generationInfo: any | undefined = undefined
 
@@ -360,12 +426,12 @@ export const useMessage = () => {
           contentToSave = reasoningContent
           fullText = reasoningContent
           apiReasoning = true
-        } else {
-          if (apiReasoning) {
-            fullText += "</think>"
-            contentToSave += "</think>"
-            apiReasoning = false
-          }
+        }
+
+        if (apiReasoning && chunk?.content) {
+          fullText += "</think>"
+          contentToSave += "</think>"
+          apiReasoning = false
         }
 
         contentToSave += chunk?.content
@@ -421,11 +487,13 @@ export const useMessage = () => {
         ...history,
         {
           role: "user",
+          createdAt: Date.now(),
           content: message,
-          image
+          image,
         },
         {
           role: "assistant",
+          createdAt: Date.now(),
           content: fullText
         }
       ])
@@ -447,6 +515,7 @@ export const useMessage = () => {
       setIsProcessing(false)
       setStreaming(false)
     } catch (e) {
+      console.log(e)
       const errorSave = await saveMessageOnError({
         e,
         botMessage: fullText,
@@ -491,7 +560,7 @@ export const useMessage = () => {
 
     const ollama = await pageAssistModel({
       model: selectedModel!,
-      baseUrl: cleanUrl(url),
+      baseUrl: cleanUrl(url)
     })
 
     let newMessage: Message[] = []
@@ -503,6 +572,7 @@ export const useMessage = () => {
         ...messages,
         {
           isBot: false,
+          createdAt: Date.now(),
           name: "You",
           message,
           sources: [],
@@ -510,6 +580,7 @@ export const useMessage = () => {
         },
         {
           isBot: true,
+          createdAt: Date.now(),
           name: selectedModel,
           message: "▋",
           sources: [],
@@ -523,6 +594,7 @@ export const useMessage = () => {
         ...messages,
         {
           isBot: true,
+          createdAt: Date.now(),
           name: selectedModel,
           message: "▋",
           sources: [],
@@ -548,7 +620,8 @@ export const useMessage = () => {
 
       if (visionImage === "") {
         throw new Error(
-          "Please close and reopen the side panel. This is a bug that will be fixed soon."
+          data?.error ||
+            "Please close and reopen the side panel. This is a bug that will be fixed soon."
         )
       }
 
@@ -615,12 +688,12 @@ export const useMessage = () => {
           contentToSave = reasoningContent
           fullText = reasoningContent
           apiReasoning = true
-        } else {
-          if (apiReasoning) {
-            fullText += "</think>"
-            contentToSave += "</think>"
-            apiReasoning = false
-          }
+        }
+
+        if (apiReasoning && chunk?.content) {
+          fullText += "</think>"
+          contentToSave += "</think>"
+          apiReasoning = false
         }
 
         contentToSave += chunk?.content
@@ -674,10 +747,12 @@ export const useMessage = () => {
         ...history,
         {
           role: "user",
+          createdAt: Date.now(),
           content: message
         },
         {
           role: "assistant",
+          createdAt: Date.now(),
           content: fullText
         }
       ])
@@ -736,7 +811,8 @@ export const useMessage = () => {
     isRegenerate: boolean,
     messages: Message[],
     history: ChatHistory,
-    signal: AbortSignal
+    signal: AbortSignal,
+    images?: string[]
   ) => {
     setStreaming(true)
     const url = await getOllamaURL()
@@ -745,9 +821,19 @@ export const useMessage = () => {
       image = `data:image/jpeg;base64,${image.split(",")[1]}`
     }
 
+    // Process multiple images if provided
+    const processedImages = images?.length > 0
+      ? images.map(img => {
+          if (img.length > 0 && !img.startsWith('data:')) {
+            return `data:image/jpeg;base64,${img.split(",")[1]}`
+          }
+          return img
+        }).filter(img => img.length > 0)
+      : image.length > 0 ? [image] : []
+
     const ollama = await pageAssistModel({
       model: selectedModel!,
-      baseUrl: cleanUrl(url),
+      baseUrl: cleanUrl(url)
     })
 
     let newMessage: Message[] = []
@@ -759,13 +845,15 @@ export const useMessage = () => {
         ...messages,
         {
           isBot: false,
+          createdAt: Date.now(),
           name: "You",
           message,
           sources: [],
-          images: [image]
+          images: processedImages
         },
         {
           isBot: true,
+          createdAt: Date.now(),
           name: selectedModel,
           message: "▋",
           sources: [],
@@ -779,6 +867,7 @@ export const useMessage = () => {
         ...messages,
         {
           isBot: true,
+          createdAt: Date.now(),
           name: selectedModel,
           message: "▋",
           sources: [],
@@ -806,24 +895,24 @@ export const useMessage = () => {
         model: selectedModel,
         useOCR
       })
-      if (image.length > 0) {
+      if (processedImages.length > 0) {
         humanMessage = await humanMessageFormatter({
           content: [
             {
               text: message,
               type: "text"
             },
-            {
-              image_url: image,
-              type: "image_url"
-            }
+            ...processedImages.map(img => ({
+              image_url: img,
+              type: "image_url" as const
+            }))
           ],
           model: selectedModel,
           useOCR
         })
       }
 
-      const applicationChatHistory = generateHistory(history, selectedModel)
+      const applicationChatHistory = await generateHistory(history, selectedModel)
 
       if (prompt && !selectedPrompt) {
         applicationChatHistory.unshift(
@@ -874,12 +963,12 @@ export const useMessage = () => {
           contentToSave = reasoningContent
           fullText = reasoningContent
           apiReasoning = true
-        } else {
-          if (apiReasoning) {
-            fullText += "</think>"
-            contentToSave += "</think>"
-            apiReasoning = false
-          }
+        }
+
+        if (apiReasoning && chunk?.content) {
+          fullText += "</think>"
+          contentToSave += "</think>"
+          apiReasoning = false
         }
 
         contentToSave += chunk?.content
@@ -934,11 +1023,14 @@ export const useMessage = () => {
         ...history,
         {
           role: "user",
+          createdAt: Date.now(),
           content: message,
-          image
+          image,
+          images: processedImages
         },
         {
           role: "assistant",
+          createdAt: Date.now(),
           content: fullText
         }
       ])
@@ -993,7 +1085,8 @@ export const useMessage = () => {
     isRegenerate: boolean,
     messages: Message[],
     history: ChatHistory,
-    signal: AbortSignal
+    signal: AbortSignal,
+    images?: string[]
   ) => {
     const url = await getOllamaURL()
     setStreaming(true)
@@ -1001,9 +1094,19 @@ export const useMessage = () => {
       image = `data:image/jpeg;base64,${image.split(",")[1]}`
     }
 
+    // Process multiple images if provided
+    const processedImages = images?.length > 0
+      ? images.map(img => {
+          if (img.length > 0 && !img.startsWith('data:')) {
+            return `data:image/jpeg;base64,${img.split(",")[1]}`
+          }
+          return img
+        }).filter(img => img.length > 0)
+      : image.length > 0 ? [image] : []
+
     const ollama = await pageAssistModel({
       model: selectedModel!,
-      baseUrl: cleanUrl(url),
+      baseUrl: cleanUrl(url)
     })
 
     let newMessage: Message[] = []
@@ -1015,13 +1118,15 @@ export const useMessage = () => {
         ...messages,
         {
           isBot: false,
+          createdAt: Date.now(),
           name: "You",
           message,
           sources: [],
-          images: [image]
+          images: processedImages
         },
         {
           isBot: true,
+          createdAt: Date.now(),
           name: selectedModel,
           message: "▋",
           sources: [],
@@ -1035,6 +1140,7 @@ export const useMessage = () => {
         ...messages,
         {
           isBot: true,
+          createdAt: Date.now(),
           name: selectedModel,
           message: "▋",
           sources: [],
@@ -1067,7 +1173,7 @@ export const useMessage = () => {
         .replaceAll("{question}", message)
       const questionModel = await pageAssistModel({
         model: selectedModel!,
-        baseUrl: cleanUrl(url),
+        baseUrl: cleanUrl(url)
       })
 
       let questionMessage = await humanMessageFormatter({
@@ -1081,17 +1187,17 @@ export const useMessage = () => {
         useOCR: useOCR
       })
 
-      if (image.length > 0) {
+      if (processedImages.length > 0) {
         questionMessage = await humanMessageFormatter({
           content: [
             {
               text: promptForQuestion,
               type: "text"
             },
-            {
-              image_url: image,
-              type: "image_url"
-            }
+            ...processedImages.map(img => ({
+              image_url: img,
+              type: "image_url" as const
+            }))
           ],
           model: selectedModel,
           useOCR: useOCR
@@ -1123,24 +1229,24 @@ export const useMessage = () => {
         model: selectedModel,
         useOCR
       })
-      if (image.length > 0) {
+      if (processedImages.length > 0) {
         humanMessage = await humanMessageFormatter({
           content: [
             {
               text: message,
               type: "text"
             },
-            {
-              image_url: image,
-              type: "image_url"
-            }
+            ...processedImages.map(img => ({
+              image_url: img,
+              type: "image_url" as const
+            }))
           ],
           model: selectedModel,
           useOCR
         })
       }
 
-      const applicationChatHistory = generateHistory(history, selectedModel)
+      const applicationChatHistory = await generateHistory(history, selectedModel)
 
       if (prompt) {
         applicationChatHistory.unshift(
@@ -1182,12 +1288,12 @@ export const useMessage = () => {
           contentToSave = reasoningContent
           fullText = reasoningContent
           apiReasoning = true
-        } else {
-          if (apiReasoning) {
-            fullText += "</think>"
-            contentToSave += "</think>"
-            apiReasoning = false
-          }
+        }
+
+        if (apiReasoning && chunk?.content) {
+          fullText += "</think>"
+          contentToSave += "</think>"
+          apiReasoning = false
         }
 
         contentToSave += chunk?.content
@@ -1244,11 +1350,14 @@ export const useMessage = () => {
         ...history,
         {
           role: "user",
+          createdAt: Date.now(),
           content: message,
-          image
+          image,
+          images: processedImages
         },
         {
           role: "assistant",
+          createdAt: Date.now(),
           content: fullText
         }
       ])
@@ -1302,7 +1411,8 @@ export const useMessage = () => {
     messages: Message[],
     history: ChatHistory,
     signal: AbortSignal,
-    messageType: string
+    messageType: string,
+    images?: string[]
   ) => {
     setStreaming(true)
     const url = await getOllamaURL()
@@ -1311,9 +1421,19 @@ export const useMessage = () => {
       image = `data:image/jpeg;base64,${image.split(",")[1]}`
     }
 
+    // Process multiple images if provided
+    const processedImages = images?.length > 0
+      ? images.map(img => {
+          if (img.length > 0 && !img.startsWith('data:')) {
+            return `data:image/jpeg;base64,${img.split(",")[1]}`
+          }
+          return img
+        }).filter(img => img.length > 0)
+      : image.length > 0 ? [image] : []
+
     const ollama = await pageAssistModel({
       model: selectedModel!,
-      baseUrl: cleanUrl(url),
+      baseUrl: cleanUrl(url)
     })
 
     let newMessage: Message[] = []
@@ -1325,14 +1445,16 @@ export const useMessage = () => {
         ...messages,
         {
           isBot: false,
+          createdAt: Date.now(),
           name: "You",
           message,
           sources: [],
-          images: [image],
+          images: processedImages,
           messageType: messageType
         },
         {
           isBot: true,
+          createdAt: Date.now(),
           name: selectedModel,
           message: "▋",
           sources: [],
@@ -1346,6 +1468,7 @@ export const useMessage = () => {
         ...messages,
         {
           isBot: true,
+          createdAt: Date.now(),
           name: selectedModel,
           message: "▋",
           sources: [],
@@ -1371,17 +1494,17 @@ export const useMessage = () => {
         model: selectedModel,
         useOCR
       })
-      if (image.length > 0) {
+      if (processedImages.length > 0) {
         humanMessage = await humanMessageFormatter({
           content: [
             {
               text: prompt.replace("{text}", message),
               type: "text"
             },
-            {
-              image_url: image,
-              type: "image_url"
-            }
+            ...processedImages.map(img => ({
+              image_url: img,
+              type: "image_url" as const
+            }))
           ],
           model: selectedModel,
           useOCR
@@ -1418,12 +1541,12 @@ export const useMessage = () => {
           contentToSave = reasoningContent
           fullText = reasoningContent
           apiReasoning = true
-        } else {
-          if (apiReasoning) {
-            fullText += "</think>"
-            contentToSave += "</think>"
-            apiReasoning = false
-          }
+        }
+
+        if (apiReasoning && chunk?.content) {
+          fullText += "</think>"
+          contentToSave += "</think>"
+          apiReasoning = false
         }
 
         contentToSave += chunk?.content
@@ -1478,12 +1601,15 @@ export const useMessage = () => {
         ...history,
         {
           role: "user",
+          createdAt: Date.now(),
           content: message,
           image,
-          messageType
+          messageType,
+          images: processedImages
         },
         {
           role: "assistant",
+          createdAt: Date.now(),
           content: fullText
         }
       ])
@@ -1537,19 +1663,25 @@ export const useMessage = () => {
   const onSubmit = async ({
     message,
     image,
+    images,
     isRegenerate,
     controller,
     memory,
     messages: chatHistory,
-    messageType
+    messageType,
+    chatType,
+    docs
   }: {
     message: string
     image: string
+    images?: string[]
     isRegenerate?: boolean
     messages?: Message[]
     memory?: ChatHistory
     controller?: AbortController
     messageType?: string
+    chatType?: string
+    docs?: ChatDocuments
   }) => {
     let signal: AbortSignal
     if (!controller) {
@@ -1561,7 +1693,23 @@ export const useMessage = () => {
       signal = controller.signal
     }
 
-    // this means that the user is trying to send something from a selected text on the web
+    if (chatType === "youtube") {
+      setChatMode("rag")
+      const newEmbeddingController = new AbortController()
+      let embeddingSignal = newEmbeddingController.signal
+      setEmbeddingController(newEmbeddingController)
+      await chatWithWebsiteMode(
+        message,
+        image,
+        isRegenerate,
+        chatHistory || messages,
+        memory || history,
+        signal,
+        embeddingSignal
+      )
+      return
+    }
+
     if (messageType) {
       await presetChatMode(
         message,
@@ -1570,27 +1718,153 @@ export const useMessage = () => {
         chatHistory || messages,
         memory || history,
         signal,
-        messageType
+        messageType,
+        images
       )
     } else {
+      const tabDocs = docs?.length > 0 ? docs : documentContext || []
+      if (tabDocs.length > 0 && chatMode === "normal") {
+        if (docs?.length > 0) {
+          setDocumentContext(
+            Array.from(new Set([...(documentContext || []), ...docs]))
+          )
+        }
+        setStreaming(true)
+        try {
+          await tabChatMode(
+            message,
+            image,
+            tabDocs,
+            isRegenerate,
+            chatHistory || messages,
+            memory || history,
+            signal,
+            {
+              selectedModel,
+              useOCR,
+              selectedSystemPrompt,
+              currentChatModelSettings,
+              setMessages,
+              saveMessageOnSuccess,
+              saveMessageOnError,
+              setHistory,
+              setIsProcessing,
+              setStreaming,
+              setAbortController,
+              historyId,
+              setHistoryId
+            }
+          )
+        } catch (e: any) {
+          notification.error({
+            message: t("error"),
+            description: e?.message || t("somethingWentWrong")
+          })
+          setIsProcessing(false)
+          setStreaming(false)
+        }
+        return
+      }
       if (chatMode === "normal") {
-        if (webSearch) {
+        const useAgentWebSearch = webSearch && enableAgentWebSearch
+        if (pageAction) {
+          await pageActionChatMode(
+            message,
+            image,
+            isRegenerate,
+            chatHistory || messages,
+            memory || history,
+            signal,
+            {
+              selectedModel,
+              useOCR,
+              selectedSystemPrompt,
+              currentChatModelSettings,
+              setMessages,
+              saveMessageOnSuccess,
+              saveMessageOnError,
+              setHistory,
+              setIsProcessing,
+              setStreaming,
+              setAbortController,
+              historyId,
+              setHistoryId,
+              images,
+              setActionInfo,
+              temporaryChat,
+              messageSource: "copilot",
+              requireMcpApproval: mcpHumanInLoop,
+              includeWebMcp: webMcp
+            }
+          )
+        } else if (webMcp) {
+          await webMcpChatMode(
+            message,
+            image,
+            isRegenerate,
+            chatHistory || messages,
+            memory || history,
+            signal,
+            {
+              selectedModel,
+              useOCR,
+              selectedSystemPrompt,
+              currentChatModelSettings,
+              setMessages,
+              saveMessageOnSuccess,
+              saveMessageOnError,
+              setHistory,
+              setIsProcessing,
+              setStreaming,
+              setAbortController,
+              historyId,
+              setHistoryId,
+              images,
+              setActionInfo,
+              temporaryChat,
+              messageSource: "copilot",
+              requireMcpApproval: mcpHumanInLoop
+            }
+          )
+        } else if (webSearch && !useAgentWebSearch) {
           await searchChatMode(
             message,
             image,
             isRegenerate || false,
             messages,
             memory || history,
-            signal
+            signal,
+            images
           )
         } else {
-          await normalChatMode(
+          await sharedNormalChatMode(
             message,
             image,
             isRegenerate,
             chatHistory || messages,
             memory || history,
-            signal
+            signal,
+            {
+              selectedModel,
+              useOCR,
+              selectedSystemPrompt,
+              currentChatModelSettings,
+              setMessages,
+              saveMessageOnSuccess,
+              saveMessageOnError,
+              setHistory,
+              setIsProcessing,
+              setStreaming,
+              setAbortController,
+              historyId,
+              setHistoryId,
+              images,
+              setActionInfo,
+              temporaryChat,
+              messageSource: "copilot",
+              requireMcpApproval: mcpHumanInLoop,
+              webSearchAsTool: useAgentWebSearch
+            }
           )
         }
       } else if (chatMode === "vision") {
@@ -1619,6 +1893,10 @@ export const useMessage = () => {
     }
   }
 
+  React.useEffect(() => {
+    onSubmitRef.current = onSubmit
+  }, [onSubmit])
+
   const stopStreamingRequest = () => {
     if (isEmbedding) {
       if (embeddingController) {
@@ -1632,64 +1910,105 @@ export const useMessage = () => {
     }
   }
 
-  const editMessage = async (
+  const editMessage = React.useCallback(async (
     index: number,
     message: string,
     isHuman: boolean
   ) => {
-    let newMessages = messages
-    let newHistory = history
+    const currentMessages = messagesRef.current
+    const currentHistory = historyRef.current
+    const currentHistoryId = historyIdRef.current
+    const nextMessages = currentMessages.map((currentMessage, currentIndex) =>
+      currentIndex === index
+        ? {
+            ...currentMessage,
+            message
+          }
+        : currentMessage
+    )
+    const nextHistory = currentHistory.map((currentMessage, currentIndex) =>
+      currentIndex === index
+        ? {
+            ...currentMessage,
+            content: message
+          }
+        : currentMessage
+    )
 
     if (isHuman) {
-      const currentHumanMessage = newMessages[index]
-      newMessages[index].message = message
-      const previousMessages = newMessages.slice(0, index + 1)
+      const currentHumanMessage = nextMessages[index]
+      const previousMessages = nextMessages.slice(0, index + 1)
       setMessages(previousMessages)
-      const previousHistory = newHistory.slice(0, index)
+      const previousHistory = nextHistory.slice(0, index)
       setHistory(previousHistory)
-      await updateMessageByIndex(historyId, index, message)
-      await deleteChatForEdit(historyId, index)
+      await updateMessageByIndex(currentHistoryId, index, message)
+      await deleteChatForEdit(currentHistoryId, index)
       const abortController = new AbortController()
-      await onSubmit({
+      await onSubmitRef.current({
         message: message,
-        image: currentHumanMessage.images[0] || "",
+        image: currentHumanMessage.images?.[0] || "",
+        images: currentHumanMessage.images || [],
         isRegenerate: true,
         messages: previousMessages,
         memory: previousHistory,
         controller: abortController
       })
     } else {
-      newMessages[index].message = message
-      setMessages(newMessages)
-      newHistory[index].content = message
-      setHistory(newHistory)
-      await updateMessageByIndex(historyId, index, message)
+      setMessages(nextMessages)
+      setHistory(nextHistory)
+      await updateMessageByIndex(currentHistoryId, index, message)
     }
-  }
+  }, [setMessages, setHistory])
 
-  const regenerateLastMessage = async () => {
-    if (history.length > 0) {
-      const lastMessage = history[history.length - 2]
-      let newHistory = history.slice(0, -2)
-      let mewMessages = messages
-      mewMessages.pop()
-      setHistory(newHistory)
-      setMessages(mewMessages)
-      await removeMessageUsingHistoryId(historyId)
-      if (lastMessage.role === "user") {
-        const newController = new AbortController()
-        await onSubmit({
-          message: lastMessage.content,
-          image: lastMessage.image || "",
-          isRegenerate: true,
-          memory: newHistory,
-          controller: newController,
-          messageType: lastMessage.messageType
-        })
-      }
-    }
-  }
+  const getMessages = React.useCallback(() => messagesRef.current, [])
+  const getHistory = React.useCallback(() => historyRef.current, [])
+  const getHistoryId = React.useCallback(() => historyIdRef.current, [])
+  const submitWithCurrentState = React.useCallback(
+    (params: any) => onSubmitRef.current(params),
+    []
+  )
 
+  const regenerateLastMessage = React.useMemo(
+    () =>
+      createRegenerateLastMessage({
+        validateBeforeSubmitFn: () => true,
+        history: getHistory,
+        messages: getMessages,
+        setHistory,
+        setMessages,
+        historyId: getHistoryId,
+        removeMessageUsingHistoryIdFn: removeMessageUsingHistoryId,
+        onSubmit: submitWithCurrentState
+      }),
+    [
+      getHistory,
+      getMessages,
+      setHistory,
+      setMessages,
+      getHistoryId,
+      submitWithCurrentState
+    ]
+  )
+  const createChatBranch = React.useMemo(
+    () =>
+      createBranchMessage({
+        historyId: null,
+        getHistoryId,
+        setHistory,
+        setHistoryId,
+        setMessages,
+        setSelectedSystemPrompt,
+        setSystemPrompt: currentChatModelSettings.setSystemPrompt
+      }),
+    [
+      setHistory,
+      setHistoryId,
+      setMessages,
+      getHistoryId,
+      setSelectedSystemPrompt,
+      currentChatModelSettings.setSystemPrompt
+    ]
+  )
   return {
     messages,
     setMessages,
@@ -1725,6 +2044,11 @@ export const useMessage = () => {
     setUseOCR,
     defaultInternetSearchOn,
     defaultChatWithWebsite,
-    history
+    history,
+    createChatBranch,
+    temporaryChat,
+    setTemporaryChat,
+    sidepanelTemporaryChat,
+    actionInfo
   }
 }

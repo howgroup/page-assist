@@ -56,6 +56,18 @@
       },
       "useMarkdownForUserMessage": {
         "label": "Aktivera Markdown-formatering för användarmeddelanden"
+      },
+      "copyAsFormattedText": {
+        "label": "Kopiera som formaterad text"
+      },
+      "tabMentionsEnabled": {
+        "label": "Aktivera Flikbenämningar (@tab)"
+      },
+      "pasteLargeTextAsFile": {
+        "label": "Klistra in stor text som fil"
+      },
+      "sidepanelTemporaryChat": {
+        "label": "Aktivera Temporär Chatt i Sidopanelen som standard"
       }
     },
     "sidepanelRag": {
@@ -99,27 +111,33 @@
     },
     "system": {
       "heading": "Systeminställningar",
+      "storageSyncEnabled": {
+        "label": "Aktivera synkronisering av webbläsarlagring (synkronisera inställningar mellan enheter)"
+      },
       "deleteChatHistory": {
         "label": "Systemåterställning",
         "button": "Återställ Allt",
         "confirm": "Är du säker på att du vill utföra en systemåterställning? Detta kommer att radera all data och kan inte ångras."
       },
       "export": {
-        "label": "Exportera chatthistorik, kunskapsbas och instruktioner",
-        "button": "Exportera Data",
-        "success": "Exportering Lyckades"
+        "label": "Exportera all data (chatthistorik, kunskapsbas, prompts och inställningar)",
+        "button": "Exportera data",
+        "success": "Export lyckades"
       },
       "import": {
-        "label": "Importera chatthistorik, kunskapsbas och instruktioner",
-        "button": "Importera Data",
-        "success": "Importering Lyckades",
-        "error": "Importeringsfel"
+        "label": "Importera all data (chatthistorik, kunskapsbas, prompts och inställningar)",
+        "button": "Importera data",
+        "success": "Import lyckades",
+        "error": "Importfel"
       }
     },
     "tts": {
       "heading": "Text till Tal Inställningar",
       "ttsEnabled": {
         "label": "Aktivera Text till Tal"
+      },
+      "ttsAutoPlay": {
+        "label": "Spela upp röstsvaret automatiskt efter slutförande"
       },
       "ttsProvider": {
         "label": "Text till Tal Leverantör",
@@ -344,7 +362,7 @@
     "heading": "Konfigurera kunskapsbas"
   },
   "rag": {
-    "title": "RAG-inställningar",
+    "title": "Pipeline-inställningar",
     "ragSettings": {
       "label": "RAG-inställningar",
       "model": {

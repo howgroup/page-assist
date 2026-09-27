@@ -1,4 +1,4 @@
-import { BaseDocumentLoader } from "langchain/document_loaders/base"
+import { BaseDocumentLoader } from "@langchain/core/document_loaders/base"
 import { Document } from "@langchain/core/documents"
 import { YtTranscript } from "yt-transcript"
 import { isWikipedia, parseWikipedia } from "@/parser/wiki"
@@ -31,6 +31,13 @@ export class PageAssistHtmlLoader
 
   async load(): Promise<Document<Record<string, any>>[]> {
     console.log("Loading HTML...", this.url)
+   
+    if (isYoutubeLink(this.url) && this.html) {
+      console.log("[SidePanel] Youtube link with HTML detected, skipping transcript")
+      const metadata = { source: this.url, url: this.url, }
+      return [new Document({ pageContent: this.html, metadata })]
+    } 
+   
     if (isYoutubeLink(this.url)) {
       console.log("Youtube link detected")
       const transcript = await getTranscript(this.url)
@@ -71,7 +78,7 @@ export class PageAssistHtmlLoader
 
         let text = ""
 
-        transcript.forEach((item) => {
+        transcript?.forEach((item) => {
           text += `[${item?.start}] ${item?.text}\n`
         })
 

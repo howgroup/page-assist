@@ -11,12 +11,23 @@
         "label": "Language",
         "placeholder": "Select a language"
       },
+      "forceRTL": {
+        "label": "Always Use RTL Layout"
+      },
       "darkMode": {
         "label": "Change Theme",
         "options": {
           "light": "Light",
           "dark": "Dark"
         }
+      },
+      "defaultCopilotPrompt": {
+        "label": "Default Prompt for SidePanel (Copilot)",
+        "placeholder": "Select a prompt"
+      },
+      "defaultWebUIPrompt": {
+        "label": "Default Prompt for Web UI",
+        "placeholder": "Select a prompt"
       },
       "copilotResumeLastChat": {
         "label": "Resume the last chat when opening the SidePanel (Copilot)"
@@ -48,14 +59,88 @@
       "openReasoning": {
         "label": "Open Reasoning Collapse by default"
       },
+      "defaultThinkingMode": {
+        "label": "Show Thinking Mode State in Forms"
+      },
       "userChatBubble": {
         "label": "Use Chat Bubble for User Messages"
+      },
+      "hideChatScrollbar": {
+        "label": "Hide Chat Scrollbar"
+      },
+      "enableQuoteReply": {
+        "label": "Reply to Selected Text in Assistant Messages"
       },
       "autoCopyResponseToClipboard": {
         "label": "Automatically Copy Response to Clipboard"
       },
       "useMarkdownForUserMessage": {
         "label": "Enable Markdown formatting for User messages"
+      },
+      "copyAsFormattedText": {
+        "label": "Copy as Formatted Text"
+      },
+      "tabMentionsEnabled": {
+        "label": "Enable Tab Mentions (@tab)"
+      },
+      "pasteLargeTextAsFile": {
+        "label": "Paste Large Text as File"
+      },
+      "ocrLanguage": {
+        "label": "Default OCR Language",
+        "placeholder": "Select an OCR language"
+      },
+      "sidepanelTemporaryChat": {
+        "label": "Enable Temporary Chat in SidePanel by default"
+      },
+      "webuiTemporaryChat": {
+        "label": "Enable Temporary Chat in Web UI by default"
+      },
+      "removeReasoningTagFromCopy": {
+        "label": "Remove Reasoning Tag from Copied Text"
+      },
+      "youtubeAutoSummarize": {
+        "label": "Show the 'Summarize' button on YouTube videos."
+      },
+      "hideReasoningWidget": {
+        "label": "Hide Reasoning Widget from AI Messages"
+      },
+      "persistChatInput": {
+        "label": "Persist Chat Input (Save unsent messages)"
+      },
+      "enableMessageQueue": {
+        "label": "Enable Message Queue While Streaming"
+      },
+      "optimizeQueueForSmallScreen": {
+        "label": "Optimize Chat UI for Small Screens"
+      },
+      "tableTextWrap": {
+        "label": "Enable Text Wrapping in Markdown Tables"
+      },
+      "showMoreForLargeMessage": {
+        "label": "Show 'Show more' for large human messages"
+      },
+      "showMessageTimestamp": {
+        "label": "Show Message Timestamp"
+      },
+      "sidebarPosition": {
+        "label": "Sidebar Position",
+        "options": {
+          "left": "Left",
+          "right": "Right"
+        }
+      },
+      "showMcpServersInChat": {
+        "label": "Show MCP Servers Toggle in Chat"
+      },
+      "enableAgentWebSearch": {
+        "label": "Use Agent Web Search (model decides when to search and fetch)"
+      },
+      "mcpHumanInLoop": {
+        "label": "Require approval before running MCP tools"
+      },
+      "showProviderNameInModelList": {
+        "label": "Show Provider Name in Model List"
       }
     },
     "sidepanelRag": {
@@ -87,6 +172,10 @@
       "searxng": {
         "url": {
           "label": "SearXNG URL"
+        },
+        "apiKey": {
+          "label": "SearXNG API Key (Optional)",
+          "placeholder": "Enter your SearXNG API key"
         }
       },
       "braveApi": {
@@ -110,6 +199,16 @@
       "firecrawlAPIKey": {
         "label": "Firecrawl API Key",
         "placeholder": "Enter your Firecrawl API key"
+      },
+      "domainFilter": {
+        "label": "Domain Filter List",
+        "description": "Only show results from these domains",
+        "placeholder": "e.g., example.com"
+      },
+      "blockedDomains": {
+        "label": "Blocked Domains",
+        "description": "Exclude results from these domains",
+        "placeholder": "e.g., spam.com"
       }
     },
     "system": {
@@ -120,12 +219,12 @@
         "confirm": "Are you sure you want to perform a system reset? This will clear all data and cannot be undone."
       },
       "export": {
-        "label": "Export Chat History, Knowledge Base, and Prompts",
+        "label": "Export All Data (Chat History, Knowledge Base, Prompts, and Settings)",
         "button": "Export Data",
         "success": "Export Success"
       },
       "import": {
-        "label": "Import Chat History, Knowledge Base, and Prompts",
+        "label": "Import All Data (Chat History, Knowledge Base, Prompts, and Settings)",
         "button": "Import Data",
         "success": "Import Success",
         "error": "Import Error"
@@ -138,12 +237,24 @@
       },
       "fontSize": {
         "label": "Font Size"
+      },
+      "webuiBtnSidePanel": {
+        "label": "Show Web UI Button in Side Panel"
+      },
+      "chatBackgroundImage": {
+        "label": "Chat Background Image"
+      },
+      "storageSyncEnabled": {
+        "label": "Enable Browser Storage Sync (Sync settings across devices)"
       }
     },
     "tts": {
       "heading": "Text-to-Speech Settings",
       "ttsEnabled": {
         "label": "Enable Text-to-Speech"
+      },
+      "ttsAutoPlay": {
+        "label": "Auto play voice response after completion"
       },
       "ttsProvider": {
         "label": "Text-to-Speech Provider",
@@ -209,6 +320,8 @@
     "notification": {
       "pullModel": "Pulling Model",
       "pullModelDescription": "Pulling {{modelName}} model. For more details, check the extension icon.",
+      "cancellingDownload": "Cancelling Download",
+      "cancellingDownloadDescription": "Model download is being cancelled...",
       "success": "Success",
       "error": "Error",
       "successDescription": "Successfully pulled the model",
@@ -358,6 +471,114 @@
     "title": "Manage Web Search",
     "heading": "Configure Web Search"
   },
+  "mcpSettings": {
+    "title": "MCP Servers",
+    "heading": "Manage MCP Servers",
+    "subheading": "Add HTTP MCP servers for normal chat, including bearer auth and custom headers.",
+    "addBtn": "Add MCP Server",
+    "humanInLoop": {
+      "label": "Require approval before running MCP tools",
+      "description": "Recommended for MCP servers with write permissions or other side effects. You can still allow or disable individual tools below.",
+      "enabledHint": "Human-in-the-loop is enabled. MCP tools will ask for approval before they run.",
+      "disabledHint": "MCP tools run without approval by default. Turn this on when an MCP server can write files, modify data, send messages, or make other changes."
+    },
+    "table": {
+      "name": "Name",
+      "url": "URL",
+      "tools": "Cached Tools",
+      "status": "Validation",
+      "notValidated": "Not validated yet",
+      "toolsUnavailable": "No cached tools",
+      "auth": "Auth",
+      "enabled": "Enabled",
+      "actions": "Actions",
+      "toolName": "Tool Name",
+      "toolDescription": "Description"
+    },
+    "actions": {
+      "refreshTools": "Refresh tools",
+      "enable": "Enable",
+      "disable": "Disable"
+    },
+    "status": {
+      "ready": "{{count}} tools available",
+      "failed": "Validation failed",
+      "notValidated": "Not validated",
+      "lastChecked": "Last checked: {{value}}"
+    },
+    "auth": {
+      "none": "No auth",
+      "bearer": "Bearer token"
+    },
+    "modal": {
+      "titleAdd": "Add MCP Server",
+      "titleEdit": "Edit MCP Server",
+      "deleteConfirm": "Delete {{name}}?",
+      "name": {
+        "label": "Server Name",
+        "placeholder": "My MCP Server",
+        "required": "Please enter a server name"
+      },
+      "url": {
+        "label": "Server URL",
+        "placeholder": "https://example.com/mcp",
+        "help": "Only Streamable HTTP MCP endpoints over HTTP or HTTPS are supported right now.",
+        "required": "Please enter a server URL",
+        "invalid": "Please enter a valid HTTP or HTTPS URL"
+      },
+      "transportNotice": {
+        "title": "Transport support",
+        "description": "Page Assist supports Streamable HTTP MCP servers only. Legacy SSE endpoints such as /sse or /messages?sessionId=... are not supported."
+      },
+      "auth": {
+        "label": "Authentication"
+      },
+      "bearerToken": {
+        "label": "Bearer Token",
+        "placeholder": "Enter bearer token",
+        "required": "Please enter a bearer token"
+      },
+      "enabled": {
+        "label": "Global Enable"
+      },
+      "headers": {
+        "label": "Custom Headers",
+        "add": "Add Header",
+        "key": {
+          "label": "Header Key",
+          "placeholder": "X-Request-ID"
+        },
+        "value": {
+          "label": "Header Value",
+          "placeholder": "value"
+        }
+      },
+      "validation": {
+        "title": "Validate Tools",
+        "help": "Connect to the MCP server, fetch available tools, and cache them before saving. Validation expects a Streamable HTTP MCP endpoint.",
+        "button": "Validate and Load Tools",
+        "availableTools": "Available tools",
+        "idle": "Validate this server to confirm the connection and load its available tools.",
+        "stale": "Connection details changed. Validate again to refresh the cached tools.",
+        "failed": "Could not validate this MCP server.",
+        "success": "Validated successfully. {{count}} tools are available.",
+        "syncedAt": "Last synced: {{value}}",
+        "saveHint": "Saving will validate the current configuration if the cached tool list is stale or missing."
+      },
+      "submit": "Save MCP Server",
+      "update": "Update MCP Server"
+    },
+    "notification": {
+      "added": "MCP server added",
+      "updated": "MCP server updated",
+      "deleted": "MCP server deleted",
+      "validated": "Loaded {{count}} MCP tools",
+      "toolsRefreshed": "Refreshed tools for {{name}}",
+      "validationFailedTitle": "MCP validation failed",
+      "storageBlockedTitle": "Page Assist can't save data",
+      "storageBlockedDescription": "Firefox Private Mode does not support saving data to IndexedDB. Please manage MCP servers from a normal window."
+    }
+  },
   "about": {
     "title": "About",
     "heading": "About",
@@ -373,7 +594,7 @@
     "heading": "Configure Knowledge Base"
   },
   "rag": {
-    "title": "RAG Settings",
+    "title": "Pipeline Settings",
     "ragSettings": {
       "label": "RAG Settings",
       "model": {
@@ -430,6 +651,11 @@
   },
   "chromeAiSettings": {
     "title": "Chrome AI Settings"
+  },
+  "memory": {
+    "enableMemoryTool": {
+      "label": "Enable Memory Tool"
+    }
   },
   "mermaid": "Mermaid"
 }

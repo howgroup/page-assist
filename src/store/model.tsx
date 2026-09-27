@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import { isGptOssModel } from "~/libs/model-utils"
 
 type CurrentChatModelSettings = {
   f16KV?: boolean
@@ -73,6 +74,13 @@ type CurrentChatModelSettings = {
 
   reasoningEffort?: string
   setReasoningEffort?: (reasoningEffort: string) => void
+
+  thinking?: boolean | "low" | "medium" | "high"
+  setThinking?: (thinking: boolean | "low" | "medium" | "high") => void
+
+
+  ocrLanguage?: string
+  setOcrLanguage?: (ocrLanguage: string) => void 
 }
 
 export const useStoreChatModelSettings = create<CurrentChatModelSettings>(
@@ -115,6 +123,9 @@ export const useStoreChatModelSettings = create<CurrentChatModelSettings>(
     setSystemPrompt: (systemPrompt: string) => set({ systemPrompt }),
     setUseMlock: (useMlock: boolean) => set({ useMlock }),
     setReasoningEffort: (reasoningEffort: string) => set({ reasoningEffort }),
+    setThinking: (thinking: boolean | "low" | "medium" | "high") => set({ thinking }),
+    ocrLanguage: undefined, 
+    setOcrLanguage: (ocrLanguage: string) => set({ ocrLanguage }), 
     reset: () =>
       set({
         f16KV: undefined,
@@ -150,6 +161,55 @@ export const useStoreChatModelSettings = create<CurrentChatModelSettings>(
         minP: undefined,
         useMlock: undefined,
         reasoningEffort: undefined,
+        thinking: undefined,
+        ocrLanguage: undefined
       })
   })
 )
+
+/**
+ * Normalize thinking value for API compatibility
+ * GPT-OSS requires string levels ("low"|"medium"|"high") and cannot disable thinking
+ * Other models use boolean (true|false)
+ *
+ * @param thinking - The thinking value from state
+ * @param modelId - The model identifier
+ * @returns normalized thinking value appropriate for the model
+ */
+export const normalizeThinking = (
+  thinking: boolean | "low" | "medium" | "high" | undefined,
+  modelId: string | null
+): boolean | "low" | "medium" | "high" | undefined => {
+  // Handle undefined
+  if (thinking === undefined) return undefined;
+
+  // Handle false (disable thinking)
+  if (thinking === false) {
+    if (isGptOssModel(modelId)) {
+      // GPT-OSS cannot disable thinking - use minimum reasoning level
+      return "low";
+    }
+    // Other models can disable thinking
+    return false;
+  }
+
+  if (isGptOssModel(modelId)) {
+    // GPT-OSS requires string levels
+    if (thinking === true) {
+      // Default to "medium" when converting boolean true to level
+      return "medium";
+    }
+    // If already a level string, return as-is
+    if (thinking === "low" || thinking === "medium" || thinking === "high") {
+      return thinking;
+    }
+    return "medium"; // Fallback
+  } else {
+    // Other models use boolean
+    if (typeof thinking === "string") {
+      // Convert any level string to boolean true for non-gpt-oss models
+      return true;
+    }
+    return thinking;
+  }
+}

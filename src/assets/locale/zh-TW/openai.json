@@ -1,7 +1,7 @@
 {
     "settings": "OpenAI 相容 API",
     "heading": "OpenAI 相容 API",
-    "subheading": "在此管理和配置您與 OpenAI 相容的 API 提供商。",
+    "subheading": "在此管理和設定您與 OpenAI 相容的 API 提供商。",
     "addBtn": "新增提供商",
     "table": {
         "name": "提供商名稱",
@@ -10,6 +10,7 @@
     },
     "modal": {
         "titleAdd": "新增提供商",
+        "titleEdit": "編輯提供商",
         "name": {
             "label": "提供商名稱",
             "required": "提供商名稱為必填項。",
@@ -34,7 +35,26 @@
             "subheading": "請選擇您想要從此提供商使用的聊天模型。",
             "success": "成功新增模型。"
         },
-        "tipLMStudio": "Page Assist 將自動取得您在 LM Studio 中載入的模型，您無需手動新增它們。"
+        "tipLMStudio": "Page Assist 將自動取得您在 LM Studio 中載入的模型，您無需手動新增它們。",
+        "vertex": {
+            "projectId": {
+                "label": "Google Cloud 專案 ID",
+                "required": "請輸入您的 Google Cloud 專案 ID",
+                "placeholder": "my-gcp-project-123456"
+            },
+            "location": {
+                "label": "位置 / 區域",
+                "required": "請選擇位置"
+            },
+            "serviceAccount": {
+                "label": "服務帳戶 JSON",
+                "required": "請貼上您的服務帳戶 JSON 或存取權杖",
+                "help": "上傳您的服務帳戶金鑰檔案，或在此貼上其 JSON 內容。資料僅儲存在本機，用於在您的瀏覽器中產生短期的存取權杖。您也可以改為直接貼上原始的存取權杖。",
+                "upload": "上傳 JSON 檔案",
+                "uploaded": "已從檔案載入服務帳戶。",
+                "invalid": "該檔案不是有效的 JSON。"
+            }
+        }
     },
     "addSuccess": "提供商新增成功。",
     "deleteSuccess": "提供商刪除成功。",
@@ -64,6 +84,7 @@
         },
         "modal": {
             "title": "新增自訂模型",
+            "titleEdit": "編輯自訂模型",
             "form": {
                 "name": {
                     "label": "模型 ID",

@@ -1,4 +1,3 @@
-import { SaveButton } from "@/components/Common/SaveButton"
 import { getModelSettings, setModelSettings } from "@/services/model-settings"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
@@ -13,6 +12,7 @@ import {
 import { Loader2 } from "lucide-react"
 import React from "react"
 import { useTranslation } from "react-i18next"
+import { useThinkingCapability } from "@/hooks/useThinkingCapability"
 
 type Props = {
   model_id: string
@@ -28,15 +28,19 @@ export const AddUpdateModelSettings: React.FC<Props> = ({
   const [form] = Form.useForm()
   const { t } = useTranslation("common")
   const queryClient = useQueryClient()
+  const { supportsThinking, isGptOss } = useThinkingCapability(model_id)
 
   const { status, isError } = useQuery({
     queryKey: ["fetchModelSettings", model_id],
     queryFn: async () => {
       const data = await getModelSettings(model_id)
-      form.setFieldsValue(data)
+      form.setFieldsValue({
+        ...data,
+        thinking: data?.thinking !== false
+      })
       return data
     },
-    staleTime: 0,
+    staleTime: 0
   })
 
   const { mutate, isPending } = useMutation({
@@ -51,7 +55,7 @@ export const AddUpdateModelSettings: React.FC<Props> = ({
       await queryClient.invalidateQueries({
         queryKey: ["fetchCustomModels"]
       })
-
+      form.resetFields()
       setOpen(false)
     }
   })
@@ -61,6 +65,7 @@ export const AddUpdateModelSettings: React.FC<Props> = ({
       title={t("modelSettings.label")}
       open={open}
       onCancel={() => {
+        form.resetFields()
         setOpen(false)
       }}
       footer={null}>
@@ -109,6 +114,16 @@ export const AddUpdateModelSettings: React.FC<Props> = ({
               placeholder={t("modelSettings.form.numPredict.placeholder")}
             />
           </Form.Item>
+
+          {supportsThinking && !isGptOss && (
+            <Form.Item
+              name="thinking"
+              valuePropName="checked"
+              label={t("modelSettings.form.thinking.label")}>
+              <Switch />
+            </Form.Item>
+          )}
+
           <Collapse
             ghost
             className="border-none bg-transparent"
@@ -204,11 +219,13 @@ export const AddUpdateModelSettings: React.FC<Props> = ({
                     </Form.Item>
                     <Form.Item
                       name="useMMap"
+                      valuePropName="checked"
                       label={t("modelSettings.form.useMMap.label")}>
                       <Switch />
                     </Form.Item>
                     <Form.Item
                       name="useMlock"
+                      valuePropName="checked"
                       label={t("modelSettings.form.useMlock.label")}>
                       <Switch />
                     </Form.Item>

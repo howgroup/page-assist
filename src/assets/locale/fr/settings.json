@@ -56,6 +56,79 @@
       },
       "useMarkdownForUserMessage": {
         "label": "Activer le formatage Markdown pour les messages de l'utilisateur"
+      },
+      "copyAsFormattedText": {
+        "label": "Copier en tant que texte formaté"
+      },
+      "tabMentionsEnabled": {
+        "label": "Activer les mentions d'onglets (@tab)"
+      },
+      "pasteLargeTextAsFile": {
+        "label": "Coller le texte volumineux en tant que fichier"
+      },
+      "sidepanelTemporaryChat": {
+        "label": "Activer le chat temporaire dans le panneau latéral par défaut"
+      },
+      "defaultCopilotPrompt": {
+        "label": "Prompt par défaut pour le panneau latéral (Copilot)",
+        "placeholder": "Sélectionner un prompt"
+      },
+      "defaultThinkingMode": {
+        "label": "Afficher l'état du mode de réflexion dans les formulaires"
+      },
+      "defaultWebUIPrompt": {
+        "label": "Prompt par défaut pour l'interface Web",
+        "placeholder": "Sélectionner un prompt"
+      },
+      "enableMessageQueue": {
+        "label": "Activer la file d'attente des messages pendant le streaming"
+      },
+      "hideReasoningWidget": {
+        "label": "Masquer le widget de raisonnement des messages IA"
+      },
+      "ocrLanguage": {
+        "label": "Langue OCR par défaut",
+        "placeholder": "Sélectionner une langue OCR"
+      },
+      "optimizeQueueForSmallScreen": {
+        "label": "Optimiser l'interface de chat pour les petits écrans"
+      },
+      "persistChatInput": {
+        "label": "Conserver la saisie du chat (enregistrer les messages non envoyés)"
+      },
+      "removeReasoningTagFromCopy": {
+        "label": "Supprimer la balise de raisonnement du texte copié"
+      },
+      "showMoreForLargeMessage": {
+        "label": "Afficher « Voir plus » pour les longs messages utilisateur"
+      },
+      "sidebarPosition": {
+        "label": "Position de la barre latérale",
+        "options": {
+          "left": "Gauche",
+          "right": "Droite"
+        }
+      },
+      "tableTextWrap": {
+        "label": "Activer le retour à la ligne dans les tableaux Markdown"
+      },
+      "webuiTemporaryChat": {
+        "label": "Activer le chat temporaire dans l'interface Web par défaut"
+      },
+      "youtubeAutoSummarize": {
+        "label": "Afficher le bouton « Résumer » sur les vidéos YouTube."
+      },
+      "showMcpServersInChat": {
+        "label": "Afficher le sélecteur de serveurs MCP dans la conversation"
+      },
+      "enableAgentWebSearch": {
+        "label": "Utiliser la recherche web par agent (le modèle décide quand rechercher et récupérer)"
+      },
+      "mcpHumanInLoop": {
+        "label": "Exiger une approbation avant d'exécuter les outils MCP"
+      },
+      "showProviderNameInModelList": {
+        "label": "Afficher le nom du fournisseur dans la liste des modèles"
       }
     },
     "sidepanelRag": {
@@ -98,31 +171,74 @@
       },
       "searchOnByDefault": {
         "label": "Recherche Internet activée par défaut"
+      },
+      "blockedDomains": {
+        "description": "Exclure les résultats provenant de ces domaines",
+        "label": "Domaines bloqués",
+        "placeholder": "ex. spam.com"
+      },
+      "domainFilter": {
+        "description": "Afficher uniquement les résultats provenant de ces domaines",
+        "label": "Liste de filtres de domaines",
+        "placeholder": "ex. example.com"
+      },
+      "exa": {
+        "label": "Clé API Exa",
+        "placeholder": "Entrer votre clé API Exa"
+      },
+      "firecrawlAPIKey": {
+        "label": "Clé API Firecrawl",
+        "placeholder": "Entrer votre clé API Firecrawl"
+      },
+      "tavilyApi": {
+        "label": "Clé API Tavily",
+        "placeholder": "Entrer votre clé API Tavily"
       }
     },
     "system": {
       "heading": "Paramètres système",
+      "storageSyncEnabled": {
+        "label": "Activer la synchronisation du stockage du navigateur (synchroniser les paramètres entre les appareils)"
+      },
       "deleteChatHistory": {
         "label": "Réinitialisation du système",
         "button": "Tout réinitialiser",
         "confirm": "Êtes-vous sûr de vouloir effectuer une réinitialisation du système ? Cela effacera toutes les données et ne pourra pas être annulé."
       },
       "export": {
-        "label": "Exporter l'historique de chat, la base de connaissances et les prompts",
+        "label": "Exporter toutes les données (historique de chat, base de connaissances, prompts et paramètres)",
         "button": "Exporter les données",
         "success": "Exportation réussie"
       },
       "import": {
-        "label": "Importer l'historique de chat, la base de connaissances et les prompts",
+        "label": "Importer toutes les données (historique de chat, base de connaissances, prompts et paramètres)",
         "button": "Importer les données",
         "success": "Importation réussie",
-        "error": "Erreur d'importation"
+        "error": "Erreur d’importation"
+      },
+      "actionIcon": {
+        "label": "Définir l'action par défaut pour les clics sur l'icône de l'extension"
+      },
+      "chatBackgroundImage": {
+        "label": "Image d'arrière-plan du chat"
+      },
+      "contextMenu": {
+        "label": "Définir l'action par défaut pour le menu contextuel"
+      },
+      "fontSize": {
+        "label": "Taille de police"
+      },
+      "webuiBtnSidePanel": {
+        "label": "Afficher le bouton Web UI dans le panneau latéral"
       }
     },
     "tts": {
       "heading": "Paramètres de synthèse vocale",
       "ttsEnabled": {
         "label": "Activer la synthèse vocale"
+      },
+      "ttsAutoPlay": {
+        "label": "Lecture automatique de la réponse vocale après la fin"
       },
       "ttsProvider": {
         "label": "Fournisseur de synthèse vocale",
@@ -192,7 +308,9 @@
       "error": "Erreur",
       "successDescription": "Modèle récupéré avec succès",
       "successDeleteDescription": "Modèle supprimé avec succès",
-      "someError": "Une erreur s'est produite. Veuillez réessayer plus tard"
+      "someError": "Une erreur s'est produite. Veuillez réessayer plus tard",
+      "cancellingDownload": "Annulation du téléchargement",
+      "cancellingDownloadDescription": "Le téléchargement du modèle est en cours d'annulation..."
     }
   },
   "managePrompts": {
@@ -352,7 +470,7 @@
     "heading": "Configurer la base de connaissances"
   },
   "rag": {
-    "title": "Paramètres RAG",
+    "title": "Paramètres Pipeline",
     "ragSettings": {
       "label": "Paramètres RAG",
       "model": {
@@ -410,5 +528,118 @@
   "chromeAiSettings": {
     "title": "Paramètres Chrome AI"
   },
-  "mermaid": "Mermaid"
+  "mermaid": "Mermaid",
+  "mcpSettings": {
+    "title": "Serveurs MCP",
+    "heading": "Gérer les serveurs MCP",
+    "subheading": "Ajoutez des serveurs MCP HTTP pour le chat normal, y compris l'authentification bearer et les en-têtes personnalisés.",
+    "addBtn": "Ajouter un serveur MCP",
+    "humanInLoop": {
+      "label": "Exiger une approbation avant d'exécuter les outils MCP",
+      "description": "Recommandé pour les serveurs MCP disposant d'autorisations d'écriture ou d'autres effets secondaires. Vous pouvez toujours autoriser ou désactiver des outils individuels ci-dessous.",
+      "enabledHint": "L'intervention humaine est activée. Les outils MCP demanderont une approbation avant de s'exécuter.",
+      "disabledHint": "Les outils MCP s'exécutent sans approbation par défaut. Activez cette option lorsqu'un serveur MCP peut écrire des fichiers, modifier des données, envoyer des messages ou effectuer d'autres modifications."
+    },
+    "table": {
+      "name": "Nom",
+      "url": "URL",
+      "tools": "Outils en cache",
+      "status": "Validation",
+      "notValidated": "Pas encore validé",
+      "toolsUnavailable": "Aucun outil en cache",
+      "auth": "Authentification",
+      "enabled": "Activé",
+      "actions": "Actions",
+      "toolName": "Nom de l'outil",
+      "toolDescription": "Description"
+    },
+    "actions": {
+      "refreshTools": "Actualiser les outils",
+      "enable": "Activer",
+      "disable": "Désactiver"
+    },
+    "status": {
+      "ready": "{{count}} outils disponibles",
+      "failed": "Échec de la validation",
+      "notValidated": "Non validé",
+      "lastChecked": "Dernière vérification : {{value}}"
+    },
+    "auth": {
+      "none": "Aucune authentification",
+      "bearer": "Jeton bearer"
+    },
+    "modal": {
+      "titleAdd": "Ajouter un serveur MCP",
+      "titleEdit": "Modifier le serveur MCP",
+      "deleteConfirm": "Supprimer {{name}} ?",
+      "name": {
+        "label": "Nom du serveur",
+        "placeholder": "Mon serveur MCP",
+        "required": "Veuillez saisir un nom de serveur"
+      },
+      "url": {
+        "label": "URL du serveur",
+        "placeholder": "https://example.com/mcp",
+        "help": "Seuls les points de terminaison MCP HTTP Streamable via HTTP ou HTTPS sont pris en charge pour le moment.",
+        "required": "Veuillez saisir une URL de serveur",
+        "invalid": "Veuillez saisir une URL HTTP ou HTTPS valide"
+      },
+      "transportNotice": {
+        "title": "Prise en charge du transport",
+        "description": "Page Assist prend en charge uniquement les serveurs MCP HTTP Streamable. Les anciens points de terminaison SSE tels que /sse ou /messages?sessionId=... ne sont pas pris en charge."
+      },
+      "auth": {
+        "label": "Authentification"
+      },
+      "bearerToken": {
+        "label": "Jeton bearer",
+        "placeholder": "Saisir le jeton bearer",
+        "required": "Veuillez saisir un jeton bearer"
+      },
+      "enabled": {
+        "label": "Activation globale"
+      },
+      "headers": {
+        "label": "En-têtes personnalisés",
+        "add": "Ajouter un en-tête",
+        "key": {
+          "label": "Clé de l'en-tête",
+          "placeholder": "X-Request-ID"
+        },
+        "value": {
+          "label": "Valeur de l'en-tête",
+          "placeholder": "valeur"
+        }
+      },
+      "validation": {
+        "title": "Valider les outils",
+        "help": "Connectez-vous au serveur MCP, récupérez les outils disponibles et mettez-les en cache avant d'enregistrer. La validation attend un point de terminaison MCP HTTP Streamable.",
+        "button": "Valider et charger les outils",
+        "availableTools": "Outils disponibles",
+        "idle": "Validez ce serveur pour confirmer la connexion et charger ses outils disponibles.",
+        "stale": "Les détails de connexion ont changé. Validez à nouveau pour actualiser les outils en cache.",
+        "failed": "Impossible de valider ce serveur MCP.",
+        "success": "Validé avec succès. {{count}} outils sont disponibles.",
+        "syncedAt": "Dernière synchronisation : {{value}}",
+        "saveHint": "L'enregistrement validera la configuration actuelle si la liste des outils en cache est obsolète ou manquante."
+      },
+      "submit": "Enregistrer le serveur MCP",
+      "update": "Mettre à jour le serveur MCP"
+    },
+    "notification": {
+      "added": "Serveur MCP ajouté",
+      "updated": "Serveur MCP mis à jour",
+      "deleted": "Serveur MCP supprimé",
+      "validated": "{{count}} outils MCP chargés",
+      "toolsRefreshed": "Outils actualisés pour {{name}}",
+      "validationFailedTitle": "Échec de la validation MCP",
+      "storageBlockedTitle": "Page Assist ne peut pas enregistrer les données",
+      "storageBlockedDescription": "Le mode privé de Firefox ne prend pas en charge l'enregistrement de données dans IndexedDB. Veuillez gérer les serveurs MCP depuis une fenêtre normale."
+    }
+  },
+  "memory": {
+    "enableMemoryTool": {
+      "label": "Activer l'outil de mémoire"
+    }
+  }
 }
